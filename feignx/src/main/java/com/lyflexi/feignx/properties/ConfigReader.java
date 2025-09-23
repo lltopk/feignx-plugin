@@ -52,7 +52,7 @@ public class ConfigReader {
         if (properties1 != null&&!properties1.isEmpty()) {
             mergedProperties.putAll(properties1);
         }
-        if (properties2 != null&&!properties1.isEmpty()) {
+        if (properties2 != null&&!properties2.isEmpty()) {
             mergedProperties.putAll(properties2);
         }
 
@@ -77,16 +77,16 @@ public class ConfigReader {
         Map<String, Object> mergedYamlData = new HashMap<>();
 
         // 合并数据，后面的覆盖前面的
-        if (yamlData1 != null) {
+        if (yamlData1 != null && !yamlData1.isEmpty()) {
             mergedYamlData.putAll(yamlData1);
         }
-        if (yamlData2 != null) {
+        if (yamlData2 != null  && !yamlData2.isEmpty()) {
             mergedYamlData.putAll(yamlData2);
         }
-        if (yamlData3 != null) {
+        if (yamlData3 != null && !yamlData3.isEmpty()) {
             mergedYamlData.putAll(yamlData3);
         }
-        if (yamlData4 != null) {
+        if (yamlData4 != null && !yamlData4.isEmpty()) {
             mergedYamlData.putAll(yamlData4);
         }
 
