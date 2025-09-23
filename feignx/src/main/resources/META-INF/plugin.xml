@@ -8,7 +8,7 @@
     <name>FeignClient Assistant</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor email="liuyanoutsee@outlook.com" url="https://github.com/brush4j">brush4j</vendor>
+    <vendor email="liuyanoutsee@outlook.com" url="https://github.com/lltopk">lltopk</vendor>
 
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
@@ -19,7 +19,7 @@
             <br>
             former name：FeignX/Navigator4URL OpenFeign RestController
             <br>
-            <a href="https://github.com/brush4j/feignx-plugin">GitHub Star</a> | <a href="https://github.com/brush4j/feignx-plugin/issues">Issues</a> | <a href="https://github.com/brush4j/feignx-plugin/pulls">Pull Request</a>
+            <a href="https://github.com/lltopk/feignx-plugin">GitHub Star</a> | <a href="https://github.com/lltopk/feignx-plugin/issues">Issues</a> | <a href="https://github.com/lltopk/feignx-plugin/pulls">Pull Request</a>
             <br>
             1. Inspired by MybatisX and method-level navigation gutter `bird`, it can flexibly jump back and forth between FeignClient and remote service ApiController cross-module. eg. feignClient -> ApiController && ApiController -> feignClient.
             <br>
@@ -37,7 +37,7 @@
     </description>
 
     <change-notes>
-        <![CDATA[update logs: https://github.com/brush4j/feignx-plugin/blob/main/feignx/docs/updateLog.md]]>
+        <![CDATA[update logs: https://github.com/lltopk/feignx-plugin/blob/main/feignx/docs/updateLog.md]]>
     </change-notes>
     <!--虽然build.gradle.kts指定过版本，但这里为了上架官方市场，还需再次执行版本-->
     <version>5.6.4.2</version>
