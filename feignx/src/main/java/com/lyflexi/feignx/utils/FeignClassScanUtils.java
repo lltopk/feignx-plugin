@@ -11,8 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 
-import org.apache.commons.collections.MapUtils;
-import org.apache.commons.collections.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -87,7 +85,7 @@ public class FeignClassScanUtils {
 
         List<PsiClass> javaFiles = initialPsiClassCacheManager.queryCurProjectPsiClassesCache(projectId);
 
-        if (CollectionUtils.isEmpty(javaFiles)) {
+        if (javaFiles == null || javaFiles.isEmpty()) {
             javaFiles = ProjectUtils.scanProjectCls(rootPackage, project);
             initialPsiClassCacheManager.initCurProjectPsiClassCache(projectId, javaFiles);
         }
@@ -95,10 +93,10 @@ public class FeignClassScanUtils {
         //Feign接口缓存查询
         Map<String, HttpMappingInfo> feignCaches = BilateralCacheManager.queryFeignCaches(project);
 
-        if (MapUtils.isNotEmpty(feignCaches)) {
+        if (feignCaches != null && !feignCaches.isEmpty()) {
             return new ArrayList<>(feignCaches.values());
         }
-        //获取项目中的所有Feign源文件
+        //��取项目中的所有Feign源文件
         List<HttpMappingInfo> feignInfos = new ArrayList<>();
         //创建全部的Feign接口信息
         for (PsiClass psiClass : javaFiles) {
@@ -164,6 +162,9 @@ public class FeignClassScanUtils {
      */
     public static String extractFeignParentPathFromClassAnnotation(PsiClass psiClass) {
         PsiAnnotation annotation = psiClass.getAnnotation(SpringCloudClassAnnotation.FEIGNCLIENT.getQualifiedName());
+        if (annotation == null) {
+            return "";
+        }
         PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
         for (PsiNameValuePair attribute : attributes) {
             if ("path".equals(attribute.getName())) {
