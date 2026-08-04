@@ -1,76 +1,60 @@
-
-idea{
-    module{
-        isDownloadJavadoc = true
-        isDownloadSources = true
-    }
-}
 plugins {
     id("java")
-    id("org.jetbrains.intellij") version "1.5.2"
+    id("org.jetbrains.intellij.platform") version "2.18.1"
 }
 
 group = "com.lyflexi"
-version = "5.6.4.3"
+version = "5.6.4.4"
 
 repositories {
-    maven { url = uri("https://www.jetbrains.com/intellij-repository/releases") }
+    intellijPlatform {
+        defaultRepositories()
+        jetbrainsRuntime()
+    }
     mavenCentral()
-    gradlePluginPortal()
-}
-
-// Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-intellij {
-    version.set("2021.2")
-//    type.set("IU") // Target IDE Platform
-    type.set("IC") // Target IDE Platform
-    //gradle的下载idea安装包位置: %USERPROFILE%\.gradle\caches\modules-2\files-2.1\com.jetbrains.intellij.idea
-    plugins.set(listOf("com.intellij.java"))
 }
 
 dependencies {
-//    implementation("com.softwareloop:mybatis-generator-lombok-plugin:1.0")
-    compileOnly("org.projectlombok:lombok:1.18.22")
-    implementation("org.yaml:snakeyaml:1.29")
-    implementation("org.apache.commons:commons-lang3:3.12.0")
-//    annotationProcessor("org.projectlombok:lombok:1.18.2");
-//    testAnnotationProcessor("org.projectlombok:lombok:1.18.2");
-}
-
-tasks {
-    // Set the JVM compatibility versions
-    withType<JavaCompile> {
-        options.encoding = "UTF-8"
-        sourceCompatibility = "11"
-        targetCompatibility = "11"
+    intellijPlatform {
+        create("IC", "2023.3")
+        bundledPlugin("com.intellij.java")
     }
-
-    withType<Javadoc> {
-        options.encoding = "UTF-8"
-
-    }
-
-    patchPluginXml {
-        // 起始支持版本，2020.3 (IDEA 201)
-        sinceBuild.set("203")
-        // 支持至更高版本的IDEA. 版本不设限
-        untilBuild.set("")
-    }
-
-    signPlugin {
-        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-        privateKey.set(System.getenv("PRIVATE_KEY"))
-        password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
-    }
-
-    publishPlugin {
-        token.set(System.getenv("PUBLISH_TOKEN"))
-    }
-    runIde {
-        jvmArgs("-Xmx4096m", "-XX:ReservedCodeCacheSize=512m", "-Xms128m")
-    }
+    compileOnly("org.projectlombok:lombok:1.18.36")
+    annotationProcessor("org.projectlombok:lombok:1.18.36")
+    implementation("org.yaml:snakeyaml:2.3")
+    implementation("org.apache.commons:commons-lang3:3.17.0")
+    implementation("commons-collections:commons-collections:3.2.2")
 }
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+}
+
+intellijPlatform {
+    pluginConfiguration {
+        ideaVersion {
+            sinceBuild = "233"
+            untilBuild = "999.*"
+        }
+        changeNotes = """
+            Migrated to IntelliJ Platform Gradle Plugin 2.x<br/>
+            Minimum supported IDE version: 2023.3+
+        """.trimIndent()
+    }
+    signing {
+        certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
+        privateKey = providers.environmentVariable("PRIVATE_KEY")
+        password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
+    }
+    publishing {
+        token = providers.environmentVariable("PUBLISH_TOKEN")
+    }
+}
+
+tasks {
+    runIde {
+        jvmArgs("-Xmx4096m", "-XX:ReservedCodeCacheSize=512m", "-Xms128m")
+    }
 }

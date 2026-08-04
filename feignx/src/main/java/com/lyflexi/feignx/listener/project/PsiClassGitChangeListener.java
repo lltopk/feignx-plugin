@@ -4,6 +4,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiTreeChangeListener;
 import com.lyflexi.feignx.cache.InitialPsiClassCacheManager;
@@ -11,21 +12,31 @@ import com.lyflexi.feignx.listener.project.handler.PsiClassAddHandler;
 import com.lyflexi.feignx.listener.project.handler.PsiClassChangeHandler;
 import com.lyflexi.feignx.listener.project.handler.PsiClassModifyHandler;
 import com.lyflexi.feignx.utils.AnnotationParserUtils;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 /**
  * git pull之后，或者git pull origin other-branch之后
- * 
+ *
  * 由于会触发psi索引树的变更，一旦存在与feign接口或者controller接口相关的改动，就会导致gutter失效
  */
-@Slf4j
 public class PsiClassGitChangeListener implements PsiTreeChangeListener {
-    Project project;
-    public PsiClassGitChangeListener(Project project){
-        this.project = project;
+
+    /**
+     * 从PsiTreeChangeEvent中获取关联的Project；获取不到时返回null，调用方安全跳过即可。
+     */
+    @Nullable
+    private static Project getProject(PsiTreeChangeEvent event) {
+        PsiElement element = event.getChild();
+        if (element == null) {
+            element = event.getParent();
+        }
+        if (element == null) return null;
+        PsiFile file = element.getContainingFile();
+        if (file == null) return null;
+        return file.getProject();
     }
 
     //aftered事件
@@ -84,8 +95,9 @@ public class PsiClassGitChangeListener implements PsiTreeChangeListener {
      * @param event
      */
     private void handleModifyEvent(@NotNull PsiTreeChangeEvent event) {
+        Project project = getProject(event);
         // 索引未完成，!禁止自旋调用，否则项目启动时候会OOM
-        if (DumbService.isDumb(project)) {
+        if (project == null || DumbService.isDumb(project)) {
             return;
         }
         PsiElement child = event.getChild();
@@ -108,8 +120,9 @@ public class PsiClassGitChangeListener implements PsiTreeChangeListener {
      * @param event
      */
     private void handleAddEvent(@NotNull PsiTreeChangeEvent event) {
+        Project project = getProject(event);
         // 索引未完成，!禁止自旋调用，否则项目启动时候会OOM
-        if (DumbService.isDumb(project)) {
+        if (project == null || DumbService.isDumb(project)) {
             return;
         }
         PsiElement child = event.getChild();

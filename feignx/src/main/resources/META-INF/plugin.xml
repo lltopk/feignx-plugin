@@ -40,9 +40,9 @@
         <![CDATA[update logs: https://github.com/lltopk/feignx-plugin/blob/main/feignx/docs/updateLog.md]]>
     </change-notes>
     <!--虽然build.gradle.kts指定过版本，但这里为了上架官方市场，还需再次执行版本-->
-    <version>5.6.4.3</version>
+    <version>5.6.4.4</version>
     <!--插件支持版本 2020.3+-->
-    <idea-version since-build="203.0"/>
+    <idea-version since-build="233"/>
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
@@ -87,20 +87,6 @@
         <psiTreeChangeListener implementation="com.lyflexi.feignx.listener.project.PsiClassGitChangeListener"/>
 
     </extensions>
-
-    <application-components>
-        <!--注册ApplicationComponent的实现-->
-        <component>
-            <implementation-class>com.lyflexi.feignx.listener.app.FeignXPluginInitializer</implementation-class>
-        </component>
-    </application-components>
-
-    <project-components>
-        <!-- 注册ProjectComponent的实现 -->
-        <component>
-            <implementation-class>com.lyflexi.feignx.listener.project.FeignXProjectComponent</implementation-class>
-        </component>
-    </project-components>
 
 
     <!--  <actions>-->
