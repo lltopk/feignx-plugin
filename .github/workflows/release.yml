@@ -1,0 +1,46 @@
+name: Build and release IntelliJ plugin
+
+on:
+  push:
+    tags:
+      - 'v*'          # push 以 v 开头的 tag 会触发构建，例如 v1.0.0
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure gradlew is executable
+        run: chmod +x ./gradlew
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*','**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build plugin (buildPlugin)
+        run: ./gradlew clean buildPlugin --no-daemon --warning-mode=all
+
+      - name: List distributions
+        run: ls -la build/distributions || true
+
+      - name: Create GitHub Release and upload plugin artifact
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          files: build/distributions/*.zip
