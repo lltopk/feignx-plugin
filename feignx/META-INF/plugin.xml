@@ -1,0 +1,78 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+  <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+  <id>com.lyflexi.feignx</id>
+  <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+  <name>FeignClient Assistant</name>
+  <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+  <vendor email="liuyanoutsee@outlook.com" url="https://github.com/lltopk">lltopk</vendor>
+  <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+  <description><![CDATA[FeignClient Assistant is a free IntelliJ IDEA plugin for SpringCloud OpenFeign. It enables bidirectional cross-module navigation between FeignClient interfaces and remote service ApiController classes, parses server.servlet.context-path and spring.mvc.servlet.path from yml/yaml/properties configuration files, and supports one-click URL path copying to the clipboard. Former name: FeignX / Navigator4URL OpenFeign RestController.<br>
+<br>
+<a href="https://github.com/lltopk/feignx-plugin">GitHub Star</a> | <a href="https://github.com/lltopk/feignx-plugin/issues">Issues</a> | <a href="https://github.com/lltopk/feignx-plugin/pulls">Pull Request</a>
+<br>
+<b>Features:</b><br>
+1. Inspired by MybatisX and method-level navigation gutter `bird`, it can flexibly jump back and forth between FeignClient and remote service ApiController cross-module. eg. feignClient -> ApiController && ApiController -> feignClient.<br>
+2. It supports `server.servlet.context-path` and `spring.mvc.servlet.path` by parsing yml/yaml/properties.<br>
+3. It is sufficiently accurate with options, after many rounds of optimization.<br>
+4. It supports real-time dynamic parsing of the target interface without the need for manual cache refreshing.<br>
+5. It supports url full path copying to the clipboard (both Feign and Controller interfaces), in order to help Vim users.<br>
+<br>
+<b>中文简介: FeignClient Assistant 是一款免费的 SpringCloud Feign 导航助手。</b><br>
+1. 受 MybatisX 和方法级导航侧边栏 `bird` 的启发，它可以在 FeignClient 与远程服务的 ApiController 之间灵活地跨模块来回跳转。例如 feignClient -> ApiController 且 ApiController -> feignClient。<br>
+2. 它通过解析 `yml/yaml/properties` 文件来支持 `server.servlet.context-path` 和 `spring.mvc.servlet.path`。<br>
+3. 经过多轮优化后，目标端点候选项已具有足够的准确性。<br>
+4. 它支持对目标接口进行实时动态解析，无需手动刷新缓存。<br>
+5. 它支持将完整的 URL 路径复制到剪贴板（包括 Feign 和 Controller 接口），以便帮助使用 Vim 的用户。<br>]]></description>
+  <change-notes><![CDATA[update logs: https://github.com/lltopk/feignx-plugin/blob/main/feignx/docs/updateLog.md]]></change-notes>
+  <!--虽然build.gradle.kts指定过版本，但这里为了上架官方市场，还需再次执行版本-->
+  <version>5.6.4.7</version>
+  <!--插件支持版本 2020.3+-->
+  <idea-version since-build="203" />
+  <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.java</depends>
+  <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.lyflexi.feignx.provider.F2CLineMarkerProvider" />
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.lyflexi.feignx.provider.C2FLineMarkerProvider" />
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.lyflexi.feignx.provider.CopyControllerUrlLineMarkerProvider" />
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.lyflexi.feignx.provider.CopyFeignUrlLineMarkerProvider" />
+    <!--    <toolWindow id="FeignX" secondary="false" icon="AllIcons.Toolwindows.WebToolWindow" anchor="bottom"-->
+    <!--                factoryClass="com.lyflexi.feignx.toolwindow.SearchToolWindowFactory"/>-->
+    <notificationGroup id="FeignClient Assistant" displayType="BALLOON" key="notification.group.name" />
+    <!-- feignclent类文件图标修改-->
+    <iconProvider id="com.lyflexi.feignx.provider.tabIcon.FeignClassIconProvider" implementation="com.lyflexi.feignx.provider.tabIcon.FeignClassIconProvider" />
+    <!-- apicontroller类文件图标修改-->
+    <iconProvider id="com.lyflexi.feignx.provider.tabIcon.RestControllerIconProvider" implementation="com.lyflexi.feignx.provider.tabIcon.RestControllerIconProvider" />
+    <!--用户配置页面-自定义是否开启文件icon替换-->
+    <applicationConfigurable implementation="com.lyflexi.feignx.user.UserPluginConfigurableUI" />
+    <!-- 右下角 StatusBar 手动刷新所有 Feign/Controller 映射的兜底入口(Issue #25) -->
+    <statusBarWidgetFactory id="com.lyflexi.feignx.refreshWidget" implementation="com.lyflexi.feignx.statusbar.FeignRefreshStatusBarWidgetFactory" order="last" />
+  </extensions>
+  <!--  <actions>-->
+  <!--    <group id="FeignX" text="FeignX" description="FeignX" popup="true">-->
+  <!--      <add-to-group group-id="ToolsMenu" anchor="first"/>-->
+  <!--      <action class="com.lyflexi.feignx.toolbar.ScanControllerAction"-->
+  <!--              text="showAll"-->
+  <!--              description="扫描项目接口"-->
+  <!--      >-->
+  <!--      </action>-->
+  <!--      <action class="com.lyflexi.feignx.toolbar.SearchControllerAction"-->
+  <!--              text="search"-->
+  <!--              description="检索项目接口"-->
+  <!--      >-->
+  <!--        <keyboard-shortcut first-keystroke="control shift J"  keymap="$default"/>-->
+  <!--      </action>-->
+  <!--    </group>-->
+  <!--  </actions>-->
+  <!-- 添加 Lombok 依赖项 -->
+  <!--    <depends>org.projectlombok</depends>-->
+  <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+</idea-plugin>
