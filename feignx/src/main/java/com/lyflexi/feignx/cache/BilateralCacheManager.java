@@ -21,8 +21,6 @@ import java.util.Objects;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections.MapUtils;
-
 /**
  * @Description: 双边缓存管理器
  * @Author: lyflexi
@@ -114,7 +112,7 @@ public class BilateralCacheManager {
         String projectId = project.getBasePath(); // 以项目路径作为唯一标识符
         Map<String, HttpMappingInfo> qualifier2Info = projectControllerCacheMap.get(projectId);
 
-        if (MapUtils.isEmpty(qualifier2Info)){
+        if (Objects.isNull(qualifier2Info) || qualifier2Info.isEmpty()){
             qualifier2Info = new HashMap();
             projectControllerCacheMap.put(projectId, qualifier2Info);
         }
@@ -133,7 +131,7 @@ public class BilateralCacheManager {
     public static void initFeignCaches(Project project, List<HttpMappingInfo> feignCaches) {
         String projectId = project.getBasePath(); // 以项目路径作为唯一标识符
         Map<String, HttpMappingInfo> qualifier2Info = projectFeignCacheMap.get(projectId);
-        if (MapUtils.isEmpty(qualifier2Info)){
+        if (Objects.isNull(qualifier2Info) || qualifier2Info.isEmpty()){
             qualifier2Info = new HashMap();
             projectFeignCacheMap.put(projectId, qualifier2Info);
         }
@@ -155,7 +153,7 @@ public class BilateralCacheManager {
         //此时有可能先于feign全扫描，所以feign缓存有可能为空
         Map<String, HttpMappingInfo> qualifier2Info = projectFeignCacheMap.get(basePath);
         //下面防空NPE
-        if (MapUtils.isEmpty(qualifier2Info)){
+        if (Objects.isNull(qualifier2Info) || qualifier2Info.isEmpty()){
             qualifier2Info = new HashMap();
             projectFeignCacheMap.put(basePath, qualifier2Info);
         }
@@ -181,7 +179,7 @@ public class BilateralCacheManager {
         String basePath = feignMethod.getProject().getBasePath();
         Map<String, HttpMappingInfo> qualifier2Info = projectFeignCacheMap.get(basePath);
         //下面防空NPE
-        if (MapUtils.isEmpty(qualifier2Info)){
+        if (Objects.isNull(qualifier2Info) || qualifier2Info.isEmpty()){
             qualifier2Info = new HashMap();
             projectFeignCacheMap.put(basePath, qualifier2Info);
         }
@@ -204,7 +202,7 @@ public class BilateralCacheManager {
         String basePath = controllerMethod.getProject().getBasePath();
         Map<String, HttpMappingInfo> qualifier2Info = projectControllerCacheMap.get(basePath);
         //下面防空NPE
-        if (MapUtils.isEmpty(qualifier2Info)){
+        if (Objects.isNull(qualifier2Info) || qualifier2Info.isEmpty()){
             qualifier2Info = new HashMap();
             projectFeignCacheMap.put(basePath, qualifier2Info);
         }
@@ -227,7 +225,7 @@ public class BilateralCacheManager {
         //此时有可能先于controller全扫描，所以controller缓存有可能为空
         Map<String, HttpMappingInfo> qualifier2Info = projectControllerCacheMap.get(basePath);
         //下面防空NPE
-        if (MapUtils.isEmpty(qualifier2Info)){
+        if (Objects.isNull(qualifier2Info) || qualifier2Info.isEmpty()){
             qualifier2Info = new HashMap();
             projectControllerCacheMap.put(basePath, qualifier2Info);
         }
