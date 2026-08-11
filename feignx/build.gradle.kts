@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.lyflexi"
-version = "5.6.4.3"
+version = "5.6.4.4"
 
 repositories {
     maven { url = uri("https://www.jetbrains.com/intellij-repository/releases") }
@@ -32,7 +32,7 @@ dependencies {
 //    implementation("com.softwareloop:mybatis-generator-lombok-plugin:1.0")
     compileOnly("org.projectlombok:lombok:1.18.22")
     implementation("org.yaml:snakeyaml:1.29")
-    implementation("org.apache.commons:commons-lang3:3.12.0")
+//    implementation("org.apache.commons:commons-lang3:3.12.0")
 //    annotationProcessor("org.projectlombok:lombok:1.18.2");
 //    testAnnotationProcessor("org.projectlombok:lombok:1.18.2");
 }
