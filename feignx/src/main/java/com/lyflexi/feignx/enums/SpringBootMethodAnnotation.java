@@ -2,6 +2,8 @@ package com.lyflexi.feignx.enums;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -39,18 +41,26 @@ public enum SpringBootMethodAnnotation {
     private final String qualifiedName;
     private final String methodName;
 
+    /**
+     * 全限定名 -> 枚举 映射，避免每次调用线性遍历 values()
+     */
+    private static final Map<String, SpringBootMethodAnnotation> BY_QUALIFIED_NAME = Arrays.stream(values())
+            .collect(Collectors.toMap(SpringBootMethodAnnotation::getQualifiedName, Function.identity()));
+
+    /**
+     * 所有方法级Restful注解的全限定名集合，避免每次调用重复构建 List
+     */
+    public static final List<String> ALL_QUALIFIED_NAMES = Arrays.stream(values())
+            .map(SpringBootMethodAnnotation::getQualifiedName)
+            .collect(Collectors.toList());
+
     SpringBootMethodAnnotation(String qualifiedName, String methodName) {
         this.qualifiedName = qualifiedName;
         this.methodName = methodName;
     }
 
     public static SpringBootMethodAnnotation getByQualifiedName(String qualifiedName) {
-        for (SpringBootMethodAnnotation springRequestAnnotation : SpringBootMethodAnnotation.values()) {
-            if (springRequestAnnotation.getQualifiedName().equals(qualifiedName)) {
-                return springRequestAnnotation;
-            }
-        }
-        return null;
+        return BY_QUALIFIED_NAME.get(qualifiedName);
     }
 
 
@@ -77,6 +87,6 @@ public enum SpringBootMethodAnnotation {
      * @return
      */
     public static List<String> allQualifiedNames() {
-        return Arrays.stream(SpringBootMethodAnnotation.values()).map(SpringBootMethodAnnotation::getQualifiedName).collect(Collectors.toList());
+        return ALL_QUALIFIED_NAMES;
     }
 }

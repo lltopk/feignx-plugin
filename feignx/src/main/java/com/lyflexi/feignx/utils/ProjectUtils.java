@@ -67,6 +67,51 @@ public class ProjectUtils {
         }
     }
 
+    /**
+     * 基于 IntelliJ 注解索引(AnnotatedElementsSearch)精确扫描所有 Controller 类(@Controller/@RestController)
+     * 相比全包递归,只命中索引中标注了目标注解的类,复杂度从 O(全项目类) 降为 O(标注类)
+     *
+     * @param project
+     * @return
+     */
+    public static List<PsiClass> scanAllControllerClasses(Project project) {
+        return searchClassesByAnnotation(project,
+                SpringBootClassAnnotation.CONTROLLER.getQualifiedName(),
+                SpringBootClassAnnotation.RESTCONTROLLER.getQualifiedName());
+    }
+
+    /**
+     * 基于 IntelliJ 注解索引(AnnotatedElementsSearch)精确扫描所有 Feign 接口(@FeignClient)
+     *
+     * @param project
+     * @return
+     */
+    public static List<PsiClass> scanAllFeignClasses(Project project) {
+        return searchClassesByAnnotation(project, SpringCloudClassAnnotation.FEIGNCLIENT.getQualifiedName());
+    }
+
+    /**
+     * 注解索引扫描通用实现
+     * 注意:查找注解类本身必须用 allScope(注解类在三方依赖库中),而检索被标注的业务类用 projectScope
+     */
+    private static List<PsiClass> searchClassesByAnnotation(Project project, String... annotationQualifiedNames) {
+        if (DumbService.isDumb(project)) {
+            return Collections.emptyList();
+        }
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+        GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+        Set<PsiClass> result = new LinkedHashSet<>();
+        for (String annotationQualifiedName : annotationQualifiedNames) {
+            PsiClass annotationClass = facade.findClass(annotationQualifiedName, allScope);
+            if (Objects.isNull(annotationClass)) {
+                continue;
+            }
+            result.addAll(AnnotatedElementsSearch.searchPsiClasses(annotationClass, projectScope).findAll());
+        }
+        return new ArrayList<>(result);
+    }
+
 
     /**
      * 扫描所有controller类,使用 IntelliJ 的 类快速索引缓存系统PsiShortNamesCache

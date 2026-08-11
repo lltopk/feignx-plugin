@@ -34,7 +34,7 @@ public class AnnotationParserUtils {
      * @return
      */
     public static PsiAnnotation findRestfulAnnotation(PsiMethod method) {
-        List<String> targetAnnotations = SpringBootMethodAnnotation.allQualifiedNames();
+        List<String> targetAnnotations = SpringBootMethodAnnotation.ALL_QUALIFIED_NAMES;
 
         //method.getModifierList()：获取方法的修饰符/注解部分
         PsiModifierList modifierList = method.getModifierList();
@@ -183,14 +183,20 @@ public class AnnotationParserUtils {
         return false;
     }
 
+    /**
+     * 请求方法名 -> 字典映射，静态常量避免每次调用重复创建 HashMap
+     */
+    private static final Map<String, String> METHOD_NAME_MAPPINGS = new HashMap<>(4);
+
+    static {
+        METHOD_NAME_MAPPINGS.put("GET", "GET");
+        METHOD_NAME_MAPPINGS.put("POST", "POST");
+        METHOD_NAME_MAPPINGS.put("PUT", "PUT");
+        METHOD_NAME_MAPPINGS.put("DELETE", "DELETE");
+    }
+
     public static String getRequestMethodFromMethodName(String methodName) {
-        // 使用字典映射替代多个条件分支
-        Map<String, String> methodMappings = new HashMap<>();
-        methodMappings.put("GET", "GET");
-        methodMappings.put("POST", "POST");
-        methodMappings.put("PUT", "PUT");
-        methodMappings.put("DELETE", "DELETE");
-        return methodMappings.getOrDefault(methodName, "REQUEST");
+        return METHOD_NAME_MAPPINGS.getOrDefault(methodName, "REQUEST");
     }
 
     /**

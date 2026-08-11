@@ -8,7 +8,9 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.InputStream;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -101,7 +103,7 @@ public class ConfigReader {
      */
     private static Properties readPropertiesFromFile(PsiDirectory moduleDirectory, String fileName) {
         Properties properties = new Properties();
-        VirtualFile[] files = findFilesByName(moduleDirectory, fileName);
+        List<VirtualFile> files = findFilesByName(moduleDirectory, fileName);
         for (VirtualFile file : files) {
             try (InputStream inputStream = file.getInputStream()) {
                 properties.load(inputStream);
@@ -121,7 +123,7 @@ public class ConfigReader {
      */
     private static Map<String, Object> readYmlFromFile(PsiDirectory moduleDirectory, String fileName) {
         Yaml yaml = new Yaml();
-        VirtualFile[] files = findFilesByName(moduleDirectory, fileName);
+        List<VirtualFile> files = findFilesByName(moduleDirectory, fileName);
         for (VirtualFile file : files) {
             try (InputStream inputStream = file.getInputStream()) {
                 return yaml.load(inputStream);
@@ -132,37 +134,27 @@ public class ConfigReader {
         return null;
     }
 
-    private static VirtualFile[] findFilesByName(PsiDirectory directory, String fileName) {
+    private static List<VirtualFile> findFilesByName(PsiDirectory directory, String fileName) {
         if (directory == null || directory.getVirtualFile() == null) {
-            return new VirtualFile[0];
+            return new ArrayList<>();
         }
-
-        return findFilesByNameRecursively(directory.getVirtualFile(), fileName);
-    }
-
-    private static VirtualFile[] findFilesByNameRecursively(VirtualFile directory, String fileName) {
-        if (!directory.isDirectory()) {
-            return new VirtualFile[0];
-        }
-
-        VirtualFile[] foundFiles = new VirtualFile[0];
-
-        for (VirtualFile child : directory.getChildren()) {
-            if (child.isDirectory()) {
-                foundFiles = concatenate(foundFiles, findFilesByNameRecursively(child, fileName));
-            } else if (fileName.equals(child.getName())) {
-                foundFiles = concatenate(foundFiles, new VirtualFile[]{child});
-            }
-        }
-
+        List<VirtualFile> foundFiles = new ArrayList<>();
+        findFilesByNameRecursively(directory.getVirtualFile(), fileName, foundFiles);
         return foundFiles;
     }
 
-    private static VirtualFile[] concatenate(VirtualFile[] array1, VirtualFile[] array2) {
-        VirtualFile[] result = new VirtualFile[array1.length + array2.length];
-        System.arraycopy(array1, 0, result, 0, array1.length);
-        System.arraycopy(array2, 0, result, array1.length, array2.length);
-        return result;
+    private static void findFilesByNameRecursively(VirtualFile directory, String fileName, List<VirtualFile> foundFiles) {
+        if (!directory.isDirectory()) {
+            return;
+        }
+
+        for (VirtualFile child : directory.getChildren()) {
+            if (child.isDirectory()) {
+                findFilesByNameRecursively(child, fileName, foundFiles);
+            } else if (fileName.equals(child.getName())) {
+                foundFiles.add(child);
+            }
+        }
     }
 
 }

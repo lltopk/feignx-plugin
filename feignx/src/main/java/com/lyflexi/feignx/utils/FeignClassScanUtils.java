@@ -35,62 +35,62 @@ public class FeignClassScanUtils {
             return elementList;
         }
         String path = controllerInfo.getPath();
-        List<HttpMappingInfo> feignInfos = scanFeignInterfaces(project);
-        if (feignInfos != null) {
-            // 遍历 Controller 类的所有方法
-            for (HttpMappingInfo feignInfo : feignInfos) {
-                if (match2F(feignInfo, path)) {
-                    elementList.add(feignInfo.getPsiMethod());
-                }
+        // 单次扫描内构建 path -> HttpMappingInfo 索引，匹配命中 O(1)
+        Map<String, List<HttpMappingInfo>> feignIndex = scanFeignIndex(project);
+        List<HttpMappingInfo> matchedInfos = feignIndex.get(path);
+        if (matchedInfos != null) {
+            for (HttpMappingInfo feignInfo : matchedInfos) {
+                elementList.add(feignInfo.getPsiMethod());
             }
         }
 
         return elementList;
     }
 
-    /**
-     * 用当前controller接口匹配目标feign接口
-     *
-     * @param feignInfo
-     * @param path
-     * @return
-     */
-    private static boolean match2F(HttpMappingInfo feignInfo, String path) {
-        return StringUtils.equals(path, feignInfo.getPath());
-    }
-
 
     /**
-     * 扫描Feign接口信息添加到缓存里面
+     * 扫描Feign接口信息
      *
      * @param project 项目
      * @return {@link List}<{@link HttpMappingInfo}>
      */
     public static List<HttpMappingInfo> scanFeignInterfaces(Project project) {
+        List<HttpMappingInfo> feignInfos = new ArrayList<>();
+        for (List<HttpMappingInfo> infos : scanFeignIndex(project).values()) {
+            feignInfos.addAll(infos);
+        }
+        return feignInfos;
+    }
+
+    /**
+     * 单次扫描内构建 接口全路径 -> HttpMappingInfo 索引
+     * 仅基于 IntelliJ 注解索引扫描 @FeignClient 接口，不再全包递归，也不跨调用持留任何缓存
+     */
+    private static Map<String, List<HttpMappingInfo>> scanFeignIndex(Project project) {
         // 检查是否在 Dumb 模式下，以避免在项目构建期间执行代码
         if (DumbService.isDumb(project)) {
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
 
-        PsiManager psiManager = PsiManager.getInstance(project);
-
-        PsiPackage rootPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage("");
-
-        // 不额外维护自定义缓存，直接基于IntelliJ自身的PSI索引/缓存进行全量扫描
-        List<PsiClass> javaFiles = ProjectUtils.scanProjectCls(rootPackage, project);
-
-        //获取项目中的所有Feign源文件
-        List<HttpMappingInfo> feignInfos = new ArrayList<>();
-        //创建全部的Feign接口信息
-        for (PsiClass psiClass : javaFiles) {
+        Map<String, List<HttpMappingInfo>> index = new HashMap<>();
+        // 基于 IntelliJ 注解索引精确扫描 @FeignClient 接口
+        List<PsiClass> feignClasses = ProjectUtils.scanAllFeignClasses(project);
+        for (PsiClass psiClass : feignClasses) {
             // 校验 psiClass 的有效性
             if (null == psiClass || !psiClass.isValid()) {
                 continue;
             }
-            feignInfos.addAll(feignsOfPsiClass(psiClass));
+            String parentPath = extractFeignParentPathFromClassAnnotation(psiClass);
+            for (PsiMethod method : psiClass.getMethods()) {
+                HttpMappingInfo feignInfo = HttpMappingInfo.of(parentPath, method);
+                if (feignInfo != null) {
+                    // 设置方法信息
+                    feignInfo.setPsiMethod(method);
+                    index.computeIfAbsent(feignInfo.getPath(), k -> new ArrayList<>()).add(feignInfo);
+                }
+            }
         }
-
-        return feignInfos;
+        return index;
     }
 
     /**

@@ -27,8 +27,11 @@ public class ServerParser {
         return Optional.ofNullable(findResourcesDirectory(moduleRootDirectory));
     }
 
-    private static PsiDirectory getModuleRootDirectory(PsiClass feignClientClass, Project project) {
-        PsiDirectory currentDirectory = feignClientClass.getContainingFile().getContainingDirectory();
+    /**
+     * 获取 psiClass 所属模块的根目录(包含 src 的目录)
+     */
+    public static PsiDirectory getModuleRootDirectory(PsiClass psiClass, Project project) {
+        PsiDirectory currentDirectory = psiClass.getContainingFile().getContainingDirectory();
 
         // 向上查找，直到找到包含 src 目录的模块根目录，或达到项目根目录
         while (currentDirectory != null) {
@@ -45,6 +48,14 @@ public class ServerParser {
             currentDirectory = currentDirectory.getParent();
         }
         return null;
+    }
+
+    /**
+     * 获取 psiClass 所属模块根目录的路径，用于单次扫描内按模块缓存配置解析结果
+     */
+    public static String getModuleRootPath(PsiClass psiClass, Project project) {
+        PsiDirectory moduleRootDirectory = getModuleRootDirectory(psiClass, project);
+        return moduleRootDirectory == null ? "" : moduleRootDirectory.getVirtualFile().getPath();
     }
 
     private static PsiDirectory findResourcesDirectory(PsiDirectory directory) {

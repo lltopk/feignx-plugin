@@ -43,26 +43,43 @@ public class ControllerClassScanUtils {
             return Collections.emptyList();
         }
 
-        PsiManager psiManager = PsiManager.getInstance(project);
-
-        PsiPackage rootPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage("");
-
-        //获取项目中的所有源文件
         List<HttpMappingInfo> httpMappingInfos = new ArrayList<>();
+        // 基于 IntelliJ 注解索引精确扫描 Controller 类，不再全包递归
+        List<PsiClass> controllerClasses = ProjectUtils.scanAllControllerClasses(project);
 
-        // 不额外维护自定义缓存，直接基于IntelliJ自身的PSI索引/缓存进行全量扫描
-        List<PsiClass> javaFiles = ProjectUtils.scanProjectCls(rootPackage, project);
+        // 单次扫描内按模块缓存 server.servlet.context-path / spring.mvc.servlet.path 的解析结果，
+        // 避免每个 controller 重复递归查找 resources 目录并解析配置文件（不跨调用持留）
+        Map<String, String> moduleServerPrefixCache = new HashMap<>();
 
         //创建全部的controller信息
-        for (PsiClass psiClass : javaFiles) {
+        for (PsiClass psiClass : controllerClasses) {
             // 校验 psiClass 的有效性
             if (null == psiClass || !psiClass.isValid()) {
                 continue;
             }
-            httpMappingInfos.addAll(controllersOfPsiClass(psiClass, project));
+            String parentPath = controllerParentPathWithModuleCache(psiClass, project, moduleServerPrefixCache);
+            for (PsiMethod method : psiClass.getMethods()) {
+                HttpMappingInfo httpMappingInfo = HttpMappingInfo.of(parentPath, method);
+                if (httpMappingInfo != null) {
+                    // 设置psi方法信息
+                    httpMappingInfo.setPsiMethod(method);
+                    httpMappingInfos.add(httpMappingInfo);
+                }
+            }
         }
 
         return httpMappingInfos;
+    }
+
+    /**
+     * 计算controller类级前缀路径(server.context-path + mvc.servlet.path + 类级@RequestMapping)
+     * 其中 server/mvc 配置按模块(moduleRoot)在单次扫描内做内存缓存，避免每个controller重复解析同一份配置文件
+     */
+    private static String controllerParentPathWithModuleCache(PsiClass psiClass, Project project, Map<String, String> moduleServerPrefixCache) {
+        String moduleKey = ServerParser.getModuleRootPath(psiClass, project);
+        String serverPrefix = moduleServerPrefixCache.computeIfAbsent(moduleKey, k ->
+                extractSpringProperties(psiClass, project, SPRINGBOOT_SERVER_PATH) + extractSpringProperties(psiClass, project, SPRINGMVC_PATH));
+        return serverPrefix + controllerPsiClassPath(psiClass);
     }
 
     /**
