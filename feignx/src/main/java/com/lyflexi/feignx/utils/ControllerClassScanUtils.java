@@ -8,7 +8,6 @@ import com.lyflexi.feignx.cache.InitialPsiClassCacheManager;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
 import com.lyflexi.feignx.properties.ConfigReader;
 import com.lyflexi.feignx.properties.ServerParser;
-import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
@@ -16,8 +15,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
-
-import org.apache.commons.collections.CollectionUtils;
 
 import static com.lyflexi.feignx.enums.SpringBootMethodAnnotation.REQUEST_MAPPING;
 
@@ -62,14 +59,14 @@ public class ControllerClassScanUtils {
 
         List<PsiClass> javaFiles = initialPsiClassCacheManager.queryCurProjectPsiClassesCache(projectId);
 
-        if (CollectionUtils.isEmpty(javaFiles)) {
+        if (Objects.isNull(javaFiles) || javaFiles.isEmpty()) {
             javaFiles = ProjectUtils.scanProjectCls(rootPackage, project);
             initialPsiClassCacheManager.initCurProjectPsiClassCache(projectId, javaFiles);
         }
         //controller接口缓存查询
         Map<String, HttpMappingInfo> controllerCaches = BilateralCacheManager.queryControllerCaches(project);
 
-        if (MapUtils.isNotEmpty(controllerCaches)) {
+        if (Objects.nonNull(controllerCaches) && !controllerCaches.isEmpty()) {
             return new ArrayList<>(controllerCaches.values());
         }
         //创建全部的controller信息

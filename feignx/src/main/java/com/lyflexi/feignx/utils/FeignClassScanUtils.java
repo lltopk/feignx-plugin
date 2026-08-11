@@ -11,8 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 
-import org.apache.commons.collections.MapUtils;
-import org.apache.commons.collections.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -87,7 +85,7 @@ public class FeignClassScanUtils {
 
         List<PsiClass> javaFiles = initialPsiClassCacheManager.queryCurProjectPsiClassesCache(projectId);
 
-        if (CollectionUtils.isEmpty(javaFiles)) {
+        if (Objects.isNull(javaFiles) || javaFiles.isEmpty()) {
             javaFiles = ProjectUtils.scanProjectCls(rootPackage, project);
             initialPsiClassCacheManager.initCurProjectPsiClassCache(projectId, javaFiles);
         }
@@ -95,7 +93,7 @@ public class FeignClassScanUtils {
         //Feign接口缓存查询
         Map<String, HttpMappingInfo> feignCaches = BilateralCacheManager.queryFeignCaches(project);
 
-        if (MapUtils.isNotEmpty(feignCaches)) {
+        if (Objects.nonNull(feignCaches) && !feignCaches.isEmpty()) {
             return new ArrayList<>(feignCaches.values());
         }
         //获取项目中的所有Feign源文件
