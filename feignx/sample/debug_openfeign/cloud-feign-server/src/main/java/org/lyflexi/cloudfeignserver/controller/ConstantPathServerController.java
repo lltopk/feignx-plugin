@@ -42,4 +42,9 @@ public class ConstantPathServerController {
     public User get(@RequestParam("code") Integer code) {
         return new User(code.longValue(), "user");
     }
+
+    @PostMapping("/feignconst/get2")
+    public User get2(@RequestParam("code") Integer code) {
+        return new User(code.longValue(), "user");
+    }
 }

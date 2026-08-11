@@ -323,3 +323,15 @@ public interface TradeInnerOrderFeignApi {
 1. 与 #21/#23（常量来自外部常量类）不同，本次支持常量定义在当前 feign 接口自身（接口字段隐式 `public static final`），方法路径 `变量 + "/xxx"`、嵌套常量 `常量 = 常量 + "/xxx"` 均可正确解析并与 controller 双向跳转。
 2. 常量解析进一步增强：支持括号包裹的拼接表达式，如 `@GetMapping((CONST) + "/xxx")`。
 3. 配套新增 sample 测试用例：`UserClientSelfConst`（feign 侧内部变量拼接 + 嵌套常量）+ `SelfConstServerController`（server 侧）。
+
+### 🚀 FeignClient Assistant v5.6.4.7更新内容
+
+新增 issue #25 的兜底功能：StatusBar 右下角手动刷新。
+
+1. 在 IDEA 右下角 StatusBar 新增一个刷新图标（使用插件图标 `pluginIcon.svg`，按 StatusBar 紧凑尺寸自适应缩放），点击后手动触发一次全量刷新：
+   - 基于注解索引重新扫描当前工程下所有 Controller 与 FeignClient，并统计扫描结果；
+   - 重启 Daemon 强制 gutter 导航图标重新计算，兜底解决索引/缓存异常导致的跳转失效。
+2. 刷新逻辑与 UI 解耦：`com.lyflexi.feignx.refresh.FeignRefreshManager` 独立于 StatusBar 展示层，后续可基于同一入口扩展快捷键 / Action 等触发方式。
+3. 刷新在后台线程执行，不阻塞 UI；索引未就绪时会给出提示。
+4. 图标 hover 提示为英文：`Refresh all FeignClients and Controllers`。
+5. 状态栏图标引用 `icons/pluginIcon.svg`（与 `META-INF/pluginIcon.svg` 同内容的副本）：插件类加载器下直接加载 `/META-INF/pluginIcon.svg` 会显示默认占位图标（咖啡杯），而 `/icons/` 目录与 gutter 图标同源、已验证可正常加载；`META-INF/pluginIcon.svg` 仍保留用于插件市场图标。

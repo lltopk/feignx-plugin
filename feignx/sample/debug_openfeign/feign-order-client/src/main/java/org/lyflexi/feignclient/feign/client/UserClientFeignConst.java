@@ -17,4 +17,7 @@ public interface UserClientFeignConst {
 
     @PostMapping("/get")
     User get(@RequestParam("code") Integer code);
+
+    @PostMapping("/get2")
+    User get2(@RequestParam("code") Integer code);
 }
