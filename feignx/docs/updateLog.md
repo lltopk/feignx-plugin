@@ -296,3 +296,30 @@ invalidated at: see attachment
 https://plugins.jetbrains.com/plugin/25604-feignclient-assistant
 
 IDEA内插件市场一键安装最方便哟~~
+
+### 🐞 FeignClient Assistant v5.6.4.5更新内容
+
+修复了 issues #21 / #23：
+
+1. 支持 Restful 注解路径中的常量拼接：`@GetMapping(CONST + "/xxx")`、`@PostMapping(CONST)`、`@FeignClient(path = CONST)` 等写法均可正确解析（含嵌套常量，如 常量 = 常量 + "/xxx"）。
+2. 复制 URL 时支持拼接 `@RequestParam` query 参数：方法参数带 `@RequestParam("code") Integer code` 时，复制的 Controller/Feign URL 会自动拼入 `?code=`，方便直接粘贴到浏览器/Postman 填充参数。
+3. 配套新增 sample 测试用例：`ConstantPathServerController`（server 端）+ `UserClientConstant`/`UserClientFeignConst`（client 端），覆盖常量拼接、嵌套常量、@FeignClient path 常量与 @RequestParam 场景。
+
+同时顺带修复了 issue #17：支持从 `application-{profile}.yml/yaml/properties`、`bootstrap-{profile}.yml` 等 profile 专属配置文件中解析 `server.servlet.context-path` / `spring.mvc.servlet.path`（按 `spring.profiles.active` 解析，maven 占位符场景兜底扫描 profile 文件）。
+
+### 🐞 FeignClient Assistant v5.6.4.6更新内容
+
+修复了 issue #26：feign 接口**内部**定义的字符串变量拼接跳转不了，如：
+
+```java
+@FeignClient(value = "market-api-trade")
+public interface TradeInnerOrderFeignApi {
+    String serverName = "/zzgg/ggpg/server/innerorder";
+    @PostMapping(value = serverName + "/createsnorder", produces = "application/json")
+    Result<JSONObject> managementAddShopPayOrderRequest(...);
+}
+```
+
+1. 与 #21/#23（常量来自外部常量类）不同，本次支持常量定义在当前 feign 接口自身（接口字段隐式 `public static final`），方法路径 `变量 + "/xxx"`、嵌套常量 `常量 = 常量 + "/xxx"` 均可正确解析并与 controller 双向跳转。
+2. 常量解析进一步增强：支持括号包裹的拼接表达式，如 `@GetMapping((CONST) + "/xxx")`。
+3. 配套新增 sample 测试用例：`UserClientSelfConst`（feign 侧内部变量拼接 + 嵌套常量）+ `SelfConstServerController`（server 侧）。

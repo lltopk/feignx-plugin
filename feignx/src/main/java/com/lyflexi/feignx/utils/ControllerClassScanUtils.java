@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
 import com.lyflexi.feignx.properties.ConfigReader;
 import com.lyflexi.feignx.properties.ServerParser;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
 import java.io.File;
@@ -242,7 +241,7 @@ public class ControllerClassScanUtils {
 //        HttpMappingInfo feignInfo = JavaSourceFileUtil.extractControllerInfo(extractFeignParentPathFromClassAnnotation(psiClass), feignMethod);
 //        if(feignInfo != null){
 //            String path = feignInfo.getPath();
-//            if(StringUtils.isNotBlank(path)){
+//            if(StringUtil.isNotBlank(path)){
 //                return path.equals(httpMappingInfo.getPath());
 //            }
 //        }
@@ -297,6 +296,6 @@ public class ControllerClassScanUtils {
      * @return
      */
     public static boolean match2C(HttpMappingInfo controllerInfo, String feignPath) {
-        return StringUtils.equals(feignPath, controllerInfo.getPath());
+        return Objects.equals(feignPath, controllerInfo.getPath());
     }
 }

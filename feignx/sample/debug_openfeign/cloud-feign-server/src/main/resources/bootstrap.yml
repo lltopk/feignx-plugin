@@ -1,7 +1,6 @@
-server:
-  servlet:
-    context-path: /hello
 spring:
+  profiles:
+    active: local
   mvc:
     servlet:
       path: /world

@@ -6,6 +6,7 @@ import com.lyflexi.feignx.enums.SpringBootClassAnnotation;
 import com.lyflexi.feignx.enums.SpringCloudClassAnnotation;
 import com.lyflexi.feignx.enums.SpringBootMethodAnnotation;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +17,6 @@ import static com.lyflexi.feignx.enums.SpringBootClassAnnotation.CONTROLLER;
 import static com.lyflexi.feignx.enums.SpringBootClassAnnotation.RESTCONTROLLER;
 
 import com.lyflexi.feignx.entity.HttpMappingInfo;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * @Author: hmly
@@ -47,7 +47,7 @@ public class AnnotationParserUtils {
         }
         for (PsiAnnotation annotation : annotations) {
             String annoName = annotation.getQualifiedName();
-            if (StringUtils.isBlank(annoName)) {
+            if (StringUtil.isBlank(annoName)) {
                 continue;
             }
             if (targetAnnotations.contains(annoName)) {
@@ -221,30 +221,132 @@ public class AnnotationParserUtils {
         for (PsiNameValuePair attribute : attributes) {
             String attributeName = attribute.getAttributeName();
             if ("value".equals(attributeName) || "path".equals(attributeName)) {
-                PsiAnnotationMemberValue attributeValue = attribute.getValue();
-                if (attributeValue instanceof PsiLiteralExpression) {
-                    Object value = ((PsiLiteralExpression) attributeValue).getValue();
-                    if (value instanceof String) {
-                        return ((String) value).startsWith("/") ? (String) value : "/" + value;
-                    }
-                }
-                else if (attributeValue instanceof PsiReferenceExpression) {
-                    // 处理引用常量的情况
-                    PsiElement resolvedElement = ((PsiReferenceExpression) attributeValue).resolve();
-                    if (resolvedElement instanceof PsiField) {
-                        PsiField field = (PsiField) resolvedElement;
-                        PsiExpression initializer = field.getInitializer();
-                        if (initializer instanceof PsiLiteralExpression) {
-                            Object value = ((PsiLiteralExpression) initializer).getValue();
-                            if (value instanceof String) {
-                                return ((String) value).startsWith("/") ? (String) value : "/" + value;
-                            }
-                        }
-                    }
+                String value = resolveStringValue(attribute.getValue());
+                if (value != null) {
+                    return value.startsWith("/") ? value : "/" + value;
                 }
             }
         }
         return "";
+    }
+
+    /**
+     * 解析注解属性值对应的字符串,支持:
+     * 1. 字符串字面量: @GetMapping("/user")
+     * 2. 单个常量引用: @GetMapping(Constants.PATH)
+     * 3. 字符串拼接: @GetMapping(Constants.PREFIX + "/user") 或 多个常量/字面量混合拼接 (Issue #21 #23)
+     * 递归解析常量初始化器,兼容 常量 = 常量 + "/xxx" 的嵌套场景
+     *
+     * @param memberValue 注解属性值,如 value = "..." 中的 "..." 表达式
+     * @return 解析出的字符串,无法解析时返回 null
+     */
+    public static String resolveStringValue(PsiAnnotationMemberValue memberValue) {
+        if (memberValue == null) {
+            return null;
+        }
+        return resolveStringExpression(memberValue);
+    }
+
+    private static String resolveStringExpression(PsiElement element) {
+        if (element instanceof PsiLiteralExpression) {
+            Object value = ((PsiLiteralExpression) element).getValue();
+            return value instanceof String ? (String) value : null;
+        }
+        if (element instanceof PsiReferenceExpression) {
+            PsiElement resolved = ((PsiReferenceExpression) element).resolve();
+            if (resolved instanceof PsiField) {
+                PsiExpression initializer = ((PsiField) resolved).getInitializer();
+                if (initializer != null) {
+                    return resolveStringExpression(initializer);
+                }
+            }
+            return null;
+        }
+        if (element instanceof PsiPolyadicExpression) {
+            StringBuilder sb = new StringBuilder();
+            for (PsiExpression operand : ((PsiPolyadicExpression) element).getOperands()) {
+                String part = resolveStringExpression(operand);
+                if (part == null) {
+                    return null;
+                }
+                sb.append(part);
+            }
+            return sb.toString();
+        }
+        if (element instanceof PsiBinaryExpression) {
+            String left = resolveStringExpression(((PsiBinaryExpression) element).getLOperand());
+            String right = resolveStringExpression(((PsiBinaryExpression) element).getROperand());
+            if (left == null || right == null) {
+                return null;
+            }
+            return left + right;
+        }
+        if (element instanceof PsiParenthesizedExpression) {
+            // 括号包裹的拼接表达式,如 @GetMapping((CONST) + "/xxx") / @GetMapping((CONST + "/xxx"))
+            return resolveStringExpression(((PsiParenthesizedExpression) element).getExpression());
+        }
+        return null;
+    }
+
+    private static final String REQUEST_PARAM_QUALIFIED_NAME = "org.springframework.web.bind.annotation.RequestParam";
+
+    /**
+     * 提取方法参数上的 @RequestParam 参数名列表,用于复制 URL 时拼接 query 串 (Issue #21)
+     * 支持写法:
+     * 1. @RequestParam("code") Integer code
+     * 2. @RequestParam(name = "code") Integer code
+     * 3. @RequestParam(value = CONST) Integer code (常量)
+     * 4. @RequestParam Integer code (未指定名称时取参数名)
+     *
+     * @param method 方法
+     * @return 参数名列表,无 @RequestParam 时返回空列表
+     */
+    public static List<String> extractRequestParams(PsiMethod method) {
+        List<String> params = new ArrayList<>();
+        if (method == null) {
+            return params;
+        }
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        for (PsiParameter parameter : parameters) {
+            PsiAnnotation requestParam = parameter.getAnnotation(REQUEST_PARAM_QUALIFIED_NAME);
+            if (requestParam != null) {
+                String name = extractRequestParamName(requestParam, parameter);
+                if (StringUtil.isNotBlank(name)) {
+                    params.add(name);
+                }
+            }
+        }
+        return params;
+    }
+
+    private static String extractRequestParamName(PsiAnnotation requestParam, PsiParameter parameter) {
+        PsiAnnotationMemberValue value = requestParam.findAttributeValue("value");
+        if (value == null) {
+            value = requestParam.findAttributeValue("name");
+        }
+        String resolved = resolveStringValue(value);
+        return resolved != null ? resolved : parameter.getName();
+    }
+
+    /**
+     * 将 @RequestParam 参数名拼接为 query 串,如 /user/list?code=
+     *
+     * @param url        原路径
+     * @param paramNames 参数名列表
+     * @return 拼接后的完整 URL
+     */
+    public static String appendRequestParams(String url, List<String> paramNames) {
+        if (url == null || paramNames == null || paramNames.isEmpty()) {
+            return url;
+        }
+        StringBuilder sb = new StringBuilder(url);
+        boolean first = !url.contains("?");
+        for (String name : paramNames) {
+            sb.append(first ? "?" : "&");
+            first = false;
+            sb.append(name).append("=");
+        }
+        return sb.toString();
     }
 
     public static void extractSwaggerInfo(PsiMethod method, HttpMappingInfo httpMappingInfo) {

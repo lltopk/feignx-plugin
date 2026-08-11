@@ -9,6 +9,7 @@ FeignClient Assistant (ID `com.lyflexi.feignx`, package `com.lyflexi.feignx`) �
 - Java 11 (`sourceCompatibility`/`targetCompatibility`), UTF-8, `since-build=203` (IDEA 2020.3+), depends on `com.intellij.modules.java`.
 - Dev loop: `runIde` launches a sandboxed IDE (`-Xmx4096m` already set); `.run/Run Plugin.run.xml` wires it from IDEA.
 - **No automated tests and no CI.** Verify manually in the sandbox IDE against the bundled multi-module Maven sample app `feignx/sample/debug_openfeign` (client/server/api modules with feign clients and controllers).
+- **Every manual test case (issue reproduction / demo) added under `feignx/sample/debug_openfeign` must ALSO be mirrored** into `E:\github\springcloud-openfeign-practice\debug-openfeign` (same modules/structure). The mirror project is a real Maven build — compile it (`JAVA_HOME=corretto-17`, `mvn -o -q -DskipTests compile`) to catch type errors the plugin sample never compiles. Its existing controllers/feign paths use no `/hello/world` prefix; when adding a module-level `server.servlet.context-path`, update existing feign client paths accordingly so the original demo keeps matching.
 
 ## Versioning (easy to miss)
 
@@ -23,7 +24,7 @@ FeignClient Assistant (ID `com.lyflexi.feignx`, package `com.lyflexi.feignx`) �
   - The current method's own `HttpMappingInfo` is computed directly via `FeignClassScanUtils.feignOfPsiMethod(...)` (feign side) and `ControllerClassScanUtils.controllerOfPsiMethod(...)` (controller side); matching is pure path comparison.
 - The `scanAll*By*` methods in `ProjectUtils` are `@Deprecated` and return empty — don't use or "fix" them.
 - Annotation matching: `AnnotationParserUtils` + `SpringCloudClassAnnotation`/`SpringBootClassAnnotation`/`SpringBootMethodAnnotation` enums. Prefer `PsiMethod.hasAnnotation(...)` over manual string checks.
-- URL prefixes (`server.servlet.context-path`, `spring.mvc.servlet.path`) are parsed from `application|bootstrap.{properties,yml,yaml}` by `properties/ConfigReader` + `ServerParser` (snakeyaml 1.29 is bundled for this — keep it).
+- URL prefixes (`server.servlet.context-path`, `spring.mvc.servlet.path`) are parsed from `application|bootstrap.{properties,yml,yaml}` **plus profile-specific files** (`application-{profile}.yml/yaml/properties`, active profile resolved from `spring.profiles.active`, with a fallback scan of `application-*.yml` when the value is a Maven placeholder) by `properties/ConfigReader` + `ServerParser` (snakeyaml 1.29 is bundled for this — keep it).
 
 ## Gotchas (all learned from past bug fixes in the changelog)
 

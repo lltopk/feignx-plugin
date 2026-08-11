@@ -15,7 +15,7 @@ import com.lyflexi.feignx.entity.HttpMappingInfo;
 import com.lyflexi.feignx.utils.AnnotationParserUtils;
 import com.lyflexi.feignx.utils.ControllerClassScanUtils;
 import com.lyflexi.feignx.utils.ProjectUtils;
-import org.apache.commons.lang3.StringUtils;
+import com.lyflexi.feignx.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
@@ -83,17 +83,19 @@ public class CopyControllerUrlLineMarkerProvider extends LineMarkerProviderDescr
         }
 
         String url = controllerCache.getPath();
-        if (StringUtils.isBlank(url)) {
+        if (StringUtil.isBlank(url)) {
             return null;
         }
+        // Issue #21:复制URL时拼接 @RequestParam query参数,如 /user/list?code=
+        String urlWithParams = AnnotationParserUtils.appendRequestParams(url, AnnotationParserUtils.extractRequestParams(method));
 
 
         PsiMethod finalMethod = method;
         GutterIconNavigationHandler<PsiElement> handler = (mouseEvent, elt) -> {
-            CopyPasteManager.getInstance().setContents(new StringSelection(url));
+            CopyPasteManager.getInstance().setContents(new StringSelection(urlWithParams));
             NotificationGroupManager.getInstance()
                     .getNotificationGroup("FeignClient Assistant")
-                    .createNotification("URL Copied To Clipboard:\n" + url, NotificationType.INFORMATION)
+                    .createNotification("URL Copied To Clipboard:\n" + urlWithParams, NotificationType.INFORMATION)
                     .notify(finalMethod.getProject());
         };
 
@@ -102,7 +104,7 @@ public class CopyControllerUrlLineMarkerProvider extends LineMarkerProviderDescr
                 restfulAnnotation,
                 restfulAnnotation.getTextRange(),
                 RestIcons.STATEMENT_LINE_CLIPBOARD_CONTROLLER_ICON,
-                psi -> "Click To Copy Controller-URL: " + url,
+                psi -> "Click To Copy Controller-URL: " + urlWithParams,
                 handler,
                 GutterIconRenderer.Alignment.RIGHT,
                 () -> "Copy Controller URL"

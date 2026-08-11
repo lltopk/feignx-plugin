@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.lyflexi.feignx.constant.RestIcons;
 import com.lyflexi.feignx.utils.AnnotationParserUtils;
+import com.lyflexi.feignx.utils.CollectionUtil;
 import com.lyflexi.feignx.utils.FeignClassScanUtils;
 import com.lyflexi.feignx.utils.ProjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,7 @@ public class C2FLineMarkerProvider extends RelatedItemLineMarkerProvider {
         //计算匹配到的目标Feign集合
         List<PsiElement> resultList = FeignClassScanUtils.process(method);
 
-        if (!resultList.isEmpty()) {
+        if (CollectionUtil.isNotEmpty(resultList)) {
             NavigationGutterIconBuilder<PsiElement> builder = NavigationGutterIconBuilder
                     .create(RestIcons.STATEMENT_LINE_CONTROLLER_ICON)
                     .setAlignment(GutterIconRenderer.Alignment.RIGHT)

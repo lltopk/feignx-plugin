@@ -1,0 +1,5 @@
+# Issue #17 演示:server.servlet.context-path 仅定义在 profile 专属配置文件中
+# 插件需识别 spring.profiles.active=local(见 bootstrap.yml)并读取本文件,否则无法跳转
+server:
+  servlet:
+    context-path: /hello

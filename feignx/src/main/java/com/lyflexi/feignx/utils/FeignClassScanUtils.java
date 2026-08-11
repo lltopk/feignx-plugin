@@ -5,8 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
 import com.lyflexi.feignx.enums.SpringCloudClassAnnotation;
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.*;
 
 import org.jetbrains.annotations.NotNull;
@@ -146,24 +144,10 @@ public class FeignClassScanUtils {
         PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
         for (PsiNameValuePair attribute : attributes) {
             if ("path".equals(attribute.getName())) {
-                PsiAnnotationMemberValue value = attribute.getValue();
-                if (value instanceof PsiLiteralExpression) {
-                    String path = ((PsiLiteralExpression) value).getValue().toString();
+                // 支持字面量/单个常量引用/常量拼接,如 @FeignClient(path = Constants.PREFIX + "/user")
+                String path = AnnotationParserUtils.resolveStringValue(attribute.getValue());
+                if (path != null) {
                     return handlePath(path);
-                } else if (value instanceof PsiReferenceExpression) {
-                    // 处理引用常量的情况
-                    PsiElement resolvedElement = ((PsiReferenceExpression) value).resolve();
-                    if (resolvedElement instanceof PsiField) {
-                        PsiField field = (PsiField) resolvedElement;
-                        PsiExpression initializer = field.getInitializer();
-                        if (initializer instanceof PsiLiteralExpression) {
-                            Object path = ((PsiLiteralExpression) initializer).getValue();
-                            if (path instanceof String) {
-                                String pathStr = (String) path;
-                                return handlePath(pathStr);
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -172,7 +156,7 @@ public class FeignClassScanUtils {
 
     private static @NotNull String handlePath(String pathStr) {
         // @geasscai https://github.com/Halfmoonly/feignx-plugin/pull/9
-        if (StringUtils.isBlank(pathStr)) {
+        if (StringUtil.isBlank(pathStr)) {
             return "";
         }
         // @geasscai https://github.com/Halfmoonly/feignx-plugin/pull/9
