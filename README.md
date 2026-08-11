@@ -15,7 +15,7 @@ Respect!
 
 我们欢迎各位的宝贵意见(^^ゞ)
 
-**诚邀广大开发者大佬们的Pull Request，让我们一起完善FeignClient Assistant(FeignX)插件**
+**诚邀广大开发者朋友们的Pull Request，让我们一起完善FeignClient Assistant(FeignX)插件**
 
 最新版本插件请及时关注IntelliJ IDEA插件市场更新FeignClient Assistant
 

@@ -17,17 +17,18 @@ FeignClient Assistant (ID `com.lyflexi.feignx`, package `com.lyflexi.feignx`) �
 
 ## Architecture
 
-- Entry points are registered in `feignx/src/main/resources/META-INF/plugin.xml`: four `LineMarkerProvider`s (`F2C`, `C2F`, `CopyControllerUrl`, `CopyFeignUrl`), two tab `IconProvider`s, settings `UserPluginConfigurableUI`, and the listeners.
-- Providers read the static `BilateralCacheManager` (maps keyed per project by `project.getBasePath()`; inner key = `PsiClass.qualifiedName + methodName`). `InitialPsiClassCacheManager` does the one-time project scan; `PsiClassGitChangeListener` (PSI tree) + `CacheCleanListener` (project open/close) refresh caches.
-- Scan via `ControllerClassScanUtils`/`FeignClassScanUtils`. The `scanAll*By*` methods in `ProjectUtils` are `@Deprecated` and return empty — don't use or "fix" them.
+- Entry points are registered in `feignx/src/main/resources/META-INF/plugin.xml`: four `LineMarkerProvider`s (`F2C`, `C2F`, `CopyControllerUrl`, `CopyFeignUrl`), two tab `IconProvider`s, and the settings page `UserPluginConfigurableUI`. There are no listeners and no legacy components anymore.
+- Everything is computed on demand from PSI, relying on IntelliJ's own PSI index/caching:
+  - `ControllerClassScanUtils.scanControllerPaths`/`FeignClassScanUtils.scanFeignInterfaces` do a full project scan every time a gutter is collected (`ProjectUtils.scanProjectCls`, project-scope only).
+  - The current method's own `HttpMappingInfo` is computed directly via `FeignClassScanUtils.feignOfPsiMethod(...)` (feign side) and `ControllerClassScanUtils.controllerOfPsiMethod(...)` (controller side); matching is pure path comparison.
+- The `scanAll*By*` methods in `ProjectUtils` are `@Deprecated` and return empty — don't use or "fix" them.
 - Annotation matching: `AnnotationParserUtils` + `SpringCloudClassAnnotation`/`SpringBootClassAnnotation`/`SpringBootMethodAnnotation` enums. Prefer `PsiMethod.hasAnnotation(...)` over manual string checks.
 - URL prefixes (`server.servlet.context-path`, `spring.mvc.servlet.path`) are parsed from `application|bootstrap.{properties,yml,yaml}` by `properties/ConfigReader` + `ServerParser` (snakeyaml 1.29 is bundled for this — keep it).
-- Legacy `ApplicationComponent`/`ProjectComponent` APIs are still used and registered in plugin.xml; keep that registration in sync when moving those classes.
 
 ## Gotchas (all learned from past bug fixes in the changelog)
 
-- Every provider/listener must guard with `ProjectUtils.isBizElement(element)` (excludes jar/library PSI) and `DumbService.isDumb(project)` before touching PSI, and access PSI only inside read actions / EDT. Skipping these caused `PsiInvalidElementAccessException`, `IndexNotReadyException`, and freezes.
+- Every provider must guard with `ProjectUtils.isBizElement(element)` (excludes jar/library PSI) and `DumbService.isDumb(project)` before touching PSI, and access PSI only inside read actions / EDT. Skipping these caused `PsiInvalidElementAccessException`, `IndexNotReadyException`, and freezes.
 - Gutter icons are intentionally anchored to the Restful annotation element, not the method name (keeps gutters stable during Enter/comment edits) — see comment in `F2CLineMarkerProvider`.
-- Editing comments (`/** */`) temporarily strips annotations; cache setters must tolerate null `HttpMappingInfo` (see `BilateralCacheManager.setFeignCache`).
+- Editing comments (`/** */`) temporarily strips annotations; `HttpMappingInfo.of` then returns null, so `feignOfPsiMethod`/`controllerOfPsiMethod` can return null — matching/copy callers must tolerate it.
 - Do not introduce newer IntelliJ Platform APIs; binary incompatibility with old IDE versions shipped before (v4.1.6 `NoSuchMethodError`). Compile against the 2021.2 SDK.
 - Keep the repo's branch/commit style: branch names like `feat/main-*`, `hotfix/main-*`; changelog entries in Chinese.

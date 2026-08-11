@@ -13,10 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.lyflexi.feignx.cache.BilateralCacheManager;
 import com.lyflexi.feignx.constant.RestIcons;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
-import com.lyflexi.feignx.recover.SmartPsiElementRecover;
 import com.lyflexi.feignx.utils.AnnotationParserUtils;
 import com.lyflexi.feignx.utils.FeignClassScanUtils;
 import com.lyflexi.feignx.utils.ProjectUtils;
@@ -79,11 +77,8 @@ public class CopyFeignUrlLineMarkerProvider extends LineMarkerProviderDescriptor
             return null;
         }
 
-        //提前初始化feign接口缓存
-        FeignClassScanUtils.scanFeignInterfaces(method.getProject());
-
-        // 获取拼接后的 Feign URL
-        HttpMappingInfo feignCache = BilateralCacheManager.setOrCoverFeignCache(method);
+        //直接基于当前feign方法计算HttpMappingInfo，不再依赖双边缓存
+        HttpMappingInfo feignCache = FeignClassScanUtils.feignOfPsiMethod(method.getContainingClass(), method);
         if (Objects.isNull(feignCache)) {
             return null;
         }

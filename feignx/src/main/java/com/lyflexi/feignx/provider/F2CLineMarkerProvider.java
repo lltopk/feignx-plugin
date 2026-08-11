@@ -10,9 +10,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.lyflexi.feignx.cache.BilateralCacheManager;
 import com.lyflexi.feignx.constant.RestIcons;
-import com.lyflexi.feignx.recover.SmartPsiElementRecover;
 import com.lyflexi.feignx.utils.AnnotationParserUtils;
 import com.lyflexi.feignx.utils.ControllerClassScanUtils;
 import com.lyflexi.feignx.utils.ProjectUtils;
@@ -67,10 +65,6 @@ public class F2CLineMarkerProvider extends RelatedItemLineMarkerProvider {
             return;
         }
 
-        // 先执行Controller的全盘初始化扫描
-        ControllerClassScanUtils.scanControllerPaths(method.getProject());
-        //为了支持用户对当前feign接口更新，无论缓存是否存在，设置或者覆盖缓存
-        BilateralCacheManager.setOrCoverFeignCache(method);
         //计算匹配到的目标Controller集合
         List<PsiElement> resultList = ControllerClassScanUtils.process(method);
         if (!resultList.isEmpty()) {

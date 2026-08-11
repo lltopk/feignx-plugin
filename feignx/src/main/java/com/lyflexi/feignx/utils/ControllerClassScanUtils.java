@@ -3,8 +3,6 @@ package com.lyflexi.feignx.utils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.lyflexi.feignx.cache.BilateralCacheManager;
-import com.lyflexi.feignx.cache.InitialPsiClassCacheManager;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
 import com.lyflexi.feignx.properties.ConfigReader;
 import com.lyflexi.feignx.properties.ServerParser;
@@ -29,8 +27,6 @@ public class ControllerClassScanUtils {
 
     private static final String SPRINGBOOT_SERVER_PATH = "server.servlet.context-path";
     private static final String SPRINGMVC_PATH = "spring.mvc.servlet.path";
-    // 初始化PsiClass缓存管理器
-    private static final InitialPsiClassCacheManager initialPsiClassCacheManager = InitialPsiClassCacheManager.getInstance();
 
     private ControllerClassScanUtils() {
     }
@@ -54,31 +50,17 @@ public class ControllerClassScanUtils {
         //获取项目中的所有源文件
         List<HttpMappingInfo> httpMappingInfos = new ArrayList<>();
 
-        // 获取项目ID
-        String projectId = project.getBasePath();
+        // 不额外维护自定义缓存，直接基于IntelliJ自身的PSI索引/缓存进行全量扫描
+        List<PsiClass> javaFiles = ProjectUtils.scanProjectCls(rootPackage, project);
 
-        List<PsiClass> javaFiles = initialPsiClassCacheManager.queryCurProjectPsiClassesCache(projectId);
-
-        if (Objects.isNull(javaFiles) || javaFiles.isEmpty()) {
-            javaFiles = ProjectUtils.scanProjectCls(rootPackage, project);
-            initialPsiClassCacheManager.initCurProjectPsiClassCache(projectId, javaFiles);
-        }
-        //controller接口缓存查询
-        Map<String, HttpMappingInfo> controllerCaches = BilateralCacheManager.queryControllerCaches(project);
-
-        if (Objects.nonNull(controllerCaches) && !controllerCaches.isEmpty()) {
-            return new ArrayList<>(controllerCaches.values());
-        }
         //创建全部的controller信息
         for (PsiClass psiClass : javaFiles) {
-            // 校验 psiClass 的有效性，毕竟有可能psiClass是从缓存中获取的，但是被RestClassIconProvider修改了
+            // 校验 psiClass 的有效性
             if (null == psiClass || !psiClass.isValid()) {
                 continue;
             }
             httpMappingInfos.addAll(controllersOfPsiClass(psiClass, project));
         }
-        // 将结果添加到缓存中
-        BilateralCacheManager.initControllerCaches(project, httpMappingInfos);
 
         return httpMappingInfos;
     }
@@ -218,12 +200,19 @@ public class ControllerClassScanUtils {
         // 获取当前项目
         Project project = psiMethod.getProject();
 
+        // 直接基于当前feign方法计算其HttpMappingInfo，不再依赖双边缓存
+        HttpMappingInfo feignInfo = FeignClassScanUtils.feignOfPsiMethod(psiMethod.getContainingClass(), psiMethod);
+        if (Objects.isNull(feignInfo)) {
+            return elementList;
+        }
+        String feignPath = feignInfo.getPath();
+
         List<HttpMappingInfo> controllerInfos = scanControllerPaths(project);
 
         if (controllerInfos != null) {
             // 遍历 Controller 类的所有方法
             for (HttpMappingInfo controller : controllerInfos) {
-                if (match2C(controller, psiMethod)) {
+                if (match2C(controller, feignPath)) {
                     elementList.add(controller.getPsiMethod());
                 }
             }
@@ -287,15 +276,10 @@ public class ControllerClassScanUtils {
      * 用当前feign接口匹配目标Controller接口
      *
      * @param controllerInfo
-     * @param feignMethod
+     * @param feignPath
      * @return
      */
-    public static boolean match2C(HttpMappingInfo controllerInfo, PsiMethod feignMethod) {
-        HttpMappingInfo feignCache = BilateralCacheManager.getOrSetFeignCache(feignMethod);
-        if (Objects.isNull(feignCache)) {
-            return false;
-        }
-        String feignPath = feignCache.getPath();
+    public static boolean match2C(HttpMappingInfo controllerInfo, String feignPath) {
         return StringUtils.equals(feignPath, controllerInfo.getPath());
     }
 }

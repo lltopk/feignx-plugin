@@ -88,27 +88,8 @@
                       implementation="com.lyflexi.feignx.provider.tabIcon.RestControllerIconProvider"/>
         <!--用户配置页面-自定义是否开启文件icon替换-->
         <applicationConfigurable implementation="com.lyflexi.feignx.user.UserPluginConfigurableUI"/>
-        <!-- 注册ProjectManagerListener的实现 -->
-        <projectManagerListener implementation="com.lyflexi.feignx.listener.app.CacheCleanListener"/>
-        <!-- 注册PsiTreeChangeListener的实现 -->
-        <psiTreeChangeListener implementation="com.lyflexi.feignx.listener.project.PsiClassGitChangeListener"/>
 
     </extensions>
-
-    <application-components>
-        <!--注册ApplicationComponent的实现-->
-        <component>
-            <implementation-class>com.lyflexi.feignx.listener.app.FeignXPluginInitializer</implementation-class>
-        </component>
-    </application-components>
-
-    <project-components>
-        <!-- 注册ProjectComponent的实现 -->
-        <component>
-            <implementation-class>com.lyflexi.feignx.listener.project.FeignXProjectComponent</implementation-class>
-        </component>
-    </project-components>
-
 
     <!--  <actions>-->
     <!--    <group id="FeignX" text="FeignX" description="FeignX" popup="true">-->
@@ -123,11 +104,6 @@
     <!--              description="检索项目接口"-->
     <!--      >-->
     <!--        <keyboard-shortcut first-keystroke="control shift J"  keymap="$default"/>-->
-    <!--      </action>-->
-    <!--      <action class="com.lyflexi.feignx.toolbar.RefreshCacheAction"-->
-    <!--              text="refresh"-->
-    <!--              description="刷新插件缓存"-->
-    <!--      >-->
     <!--      </action>-->
     <!--    </group>-->
     <!--  </actions>-->

@@ -10,10 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.lyflexi.feignx.cache.BilateralCacheManager;
 import com.lyflexi.feignx.constant.RestIcons;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
-import com.lyflexi.feignx.recover.SmartPsiElementRecover;
 import com.lyflexi.feignx.utils.AnnotationParserUtils;
 import com.lyflexi.feignx.utils.ControllerClassScanUtils;
 import com.lyflexi.feignx.utils.ProjectUtils;
@@ -77,10 +75,8 @@ public class CopyControllerUrlLineMarkerProvider extends LineMarkerProviderDescr
             return null;
         }
 
-        //初始化所有的controller缓存
-        ControllerClassScanUtils.scanControllerPaths(method.getProject());
-
-        HttpMappingInfo controllerCache = BilateralCacheManager.setOrCoverControllerCache(method);
+        //直接基于当前controller方法计算HttpMappingInfo，不再依赖双边缓存
+        HttpMappingInfo controllerCache = ControllerClassScanUtils.controllerOfPsiMethod(method.getContainingClass(), method.getProject(), method);
 
         if (Objects.isNull(controllerCache)) {
             return null;

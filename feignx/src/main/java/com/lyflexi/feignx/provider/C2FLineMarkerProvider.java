@@ -10,9 +10,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.lyflexi.feignx.cache.BilateralCacheManager;
 import com.lyflexi.feignx.constant.RestIcons;
-import com.lyflexi.feignx.recover.SmartPsiElementRecover;
 import com.lyflexi.feignx.utils.AnnotationParserUtils;
 import com.lyflexi.feignx.utils.FeignClassScanUtils;
 import com.lyflexi.feignx.utils.ProjectUtils;
@@ -68,10 +66,6 @@ public class C2FLineMarkerProvider extends RelatedItemLineMarkerProvider {
         if (Objects.isNull(restfulAnnotation)) {
             return;
         }
-        // 先执行Feign的全盘初始化扫描
-        FeignClassScanUtils.scanFeignInterfaces(method.getProject());
-        // 为了支持用户对当前controller接口更新，无论缓存是否存在，设置或者覆盖缓存
-        BilateralCacheManager.setOrCoverControllerCache(method);
         //计算匹配到的目标Feign集合
         List<PsiElement> resultList = FeignClassScanUtils.process(method);
 
