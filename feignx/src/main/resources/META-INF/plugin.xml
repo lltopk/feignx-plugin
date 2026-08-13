@@ -23,19 +23,21 @@
 3. It is sufficiently accurate with options, after many rounds of optimization.<br>
 4. It supports real-time dynamic parsing of the target interface without the need for manual cache refreshing.<br>
 5. It supports url full path copying to the clipboard (both Feign and Controller interfaces), in order to help Vim users.<br>
+6. It provides a right-side `FeignClient Assistant Endpoints` tool window listing all SpringBoot startup classes, SpringMVC and OpenFeign endpoints in a tree (grouped by type with distinct icons), featuring fuzzy path search, HttpType/EndpointType filters, refresh, and expand/collapse-all buttons.<br>
 <br>
 <b>中文简介: FeignClient Assistant 是一款免费的 SpringCloud Feign 导航助手。</b><br>
 1. 受 MybatisX 和方法级导航侧边栏 `bird` 的启发，它可以在 FeignClient 与远程服务的 ApiController 之间灵活地跨模块来回跳转。例如 feignClient -> ApiController 且 ApiController -> feignClient。<br>
 2. 它通过解析 `yml/yaml/properties` 文件来支持 `server.servlet.context-path` 和 `spring.mvc.servlet.path`。<br>
 3. 经过多轮优化后，目标端点候选项已具有足够的准确性。<br>
 4. 它支持对目标接口进行实时动态解析，无需手动刷新缓存。<br>
-5. 它支持将完整的 URL 路径复制到剪贴板（包括 Feign 和 Controller 接口），以便帮助使用 Vim 的用户。<br>]]></description>
+5. 它支持将完整的 URL 路径复制到剪贴板（包括 Feign 和 Controller 接口），以便帮助使用 Vim 的用户。<br>
+6. 它提供右侧 `FeignClient Assistant Endpoints` 端点侧边栏，以树形结构集中展示工程内全部 SpringBoot 启动类、SpringMVC 与 OpenFeign 端点（按类型分组、图标区分），支持路径模糊搜索、HttpType/EndpointType 分类过滤、刷新与全部展开/收起。<br>]]></description>
 
     <change-notes>
         <![CDATA[update logs: https://github.com/lltopk/feignx-plugin/blob/main/feignx/docs/updateLog.md]]>
     </change-notes>
     <!--虽然build.gradle.kts指定过版本，但这里为了上架官方市场，还需再次执行版本-->
-    <version>5.6.4.7</version>
+    <version>5.7.0</version>
     <!--插件支持版本 2020.3+-->
     <idea-version since-build="203.0"/>
     <!-- Product and plugin compatibility requirements.
@@ -81,6 +83,12 @@
         <statusBarWidgetFactory id="com.lyflexi.feignx.refreshWidget"
                                 implementation="com.lyflexi.feignx.statusbar.FeignRefreshStatusBarWidgetFactory"
                                 order="last"/>
+
+        <!-- 右侧"feignx assistant endpoints"端点侧边栏(独立功能,展示工程内全部 SpringMVC/Feign 端点) -->
+        <toolWindow id="FeignClient Assistant Endpoints"
+                    anchor="right"
+                    icon="/icons/jumpAction_controller.svg"
+                    factoryClass="com.lyflexi.feignx.toolwindow.EndpointsToolWindowFactory"/>
 
     </extensions>
 

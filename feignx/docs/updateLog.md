@@ -335,3 +335,14 @@ public interface TradeInnerOrderFeignApi {
 3. 刷新在后台线程执行，不阻塞 UI；索引未就绪时会给出提示。
 4. 图标 hover 提示为英文：`Refresh all FeignClients and Controllers`。
 5. 状态栏图标引用 `icons/pluginIcon.svg`（与 `META-INF/pluginIcon.svg` 同内容的副本）：插件类加载器下直接加载 `/META-INF/pluginIcon.svg` 会显示默认占位图标（咖啡杯），而 `/icons/` 目录与 gutter 图标同源、已验证可正常加载；`META-INF/pluginIcon.svg` 仍保留用于插件市场图标。
+
+### 🚀 FeignClient Assistant v5.7.0更新内容
+
+新增独立功能:右侧"feignx assistant endpoints"端点侧边栏。
+
+1. 在 IDEA 右侧新增侧边栏,图标复用 icons/jumpAction_controller.svg,展开后展示工程内全部 SpringMVC 端点与 Feign 端点及其请求路径。
+2. 端点分为 SpringBoot / SpringMVC / OpenFeign 三个分组(SpringBoot 排最上),分组下先按类、再按请求路径逐级展开(SpringBoot 分组只展示 @SpringBootApplication 启动类);每个请求前标注 GET / POST / PUT / DELETE(泛化 @RequestMapping 显示为 ALL)。
+3. 类节点左侧使用 gutter 图标区分类型:SpringMVC 类使用 icons/jumpAction_controller.svg,OpenFeign 类使用 icons/jumpAction_feign.svg,SpringBoot 启动类使用经典 Spring 图标 icons/spring.svg,无需配色即可一眼区分。
+4. 顶部支持:按路径模糊搜索(contains,忽略大小写) + HttpType 请求类型(GET/POST/PUT/DELETE)下拉过滤 + EndpointType(SpringBoot/SpringMVC/OpenFeign)分类下拉过滤,左上角提供刷新按钮,点击后台重新全量扫描;新增"全部展开/全部收起"按钮。
+5. 双击类节点可跳转到该类源码,双击请求路径节点可跳转到对应接口方法。
+6. 该功能完全独立实现于 com.lyflexi.feignx.toolwindow 包,不修改任何历史 gutter / 状态栏 / 配置代码,仅复用已有公共扫描工具类。

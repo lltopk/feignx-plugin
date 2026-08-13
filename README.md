@@ -56,19 +56,30 @@ FeignClient Assistant是一个免费的SpringCloud FeignClient与远程SpringBoo
 3. FeignClient Assistant精确定位目标接口，在多目标接口场景下，`FeignClient Assistant`给用户提供多选项
 4. FeignClient Assistant支持实时动态解析目标接口，无需手动刷新缓存
 5. FeignClient Assistant支持url全路径复制到剪贴板（包括`Feign`和`Controller`接口），以帮助Vim朋友。
+6. FeignClient Assistant提供右侧`FeignClient Assistant Endpoints`端点侧边栏：以树形结构集中展示工程内全部SpringBoot启动类、SpringMVC与OpenFeign端点（按类型分组、图标区分），支持路径模糊搜索、`HttpType`/`EndpointType`分类过滤、刷新与全部展开/收起，双击可跳转源码。
 
-附图演示：
-
+### feat navigation
 eg. FeignClent接口方法 跨模块导航跳转至 目标ApiController接口，与URL全路径一键剪切板拷贝
 <div align="left">
-  <img src="./feignx/pics/snipping-feignClient.png">
+  <img src="./feignx/pics/feat_feignClient.png">
 </div>
 
 eg. ApiController接口方法 跨模块导航跳转至 目标FeignClient接口，与URL全路径一键剪切板拷贝
 
 <div align="left">
-  <img src="./feignx/pics/snipping-apiController.png">
+  <img src="./feignx/pics/feat_apiController.png">
 </div>
+
+### feat endpoints
+<div align="left">
+  <img src="./feignx/pics/feat_endpoints.png">
+</div>
+
+### feat refresh
+<div align="left">
+  <img src="./feignx/pics/feat_handson_refresh.png">
+</div>
+
 
 ## 更新日志
 
