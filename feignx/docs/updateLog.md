@@ -314,3 +314,9 @@ public interface TradeInnerOrderFeignApi {
 3. 左块顶部提供基础地址输入框（默认 `http://localhost:8080`）与「执行」按钮，点击后在网络后台线程发送真实 HTTP 请求；脚本基于 IntelliJ HTTP Client 格式，可自由编辑。
 4. 右块展示最近一次请求的响应体（状态码 + 响应头 + 响应体 + 耗时），请求在后台线程执行，不阻塞 UI。
 5. 新增请求历史功能：每次执行后自动将「请求脚本 + 响应结果」落盘到当前工程 `.idea/feignx-history` 目录（按时间倒序），右块「历史请求」按钮可弹出历史列表（支持输入过滤），选中即可一键回填脚本与响应，方便复用与追溯。
+
+### 🐞 FeignClient Assistant With RequestX v5.7.2更新内容
+更新分支：main
+
+1. 修复端点侧边栏双击请求端点所在整行（含文字右侧空白区域）无法定位到编辑器源码的问题，现在双击该行任意位置即可跳转到对应接口方法/类源码。
+2. 修复在较新 IDEA（如 2025.3 等）下，Kotlin 插件 Analysis API 服务缺失导致注解扫描抛出 `Cannot find service KaGlobalSearchScopeMerger / KotlinProjectStructureProvider`、Controller/Feign 之间导航 gutter 消失的问题：改为基于 Java 注解索引（JavaAnnotationIndex）扫描工程内标注类，绕开会触发 Kotlin 注解搜索扩展点的 `AnnotatedElementsSearch`。
