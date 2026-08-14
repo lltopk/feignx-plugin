@@ -96,6 +96,10 @@ public interface UserClient5 {
     @GetMapping(value = "/parallelScan11/{id}")
     User parallelScan11(@PathVariable("id") Long id);
 
+
+    @GetMapping(value = "/parallelScan11/{id}")
+    User parallelScan111(@PathVariable("id") Long id);
+
     @GetMapping(value = "/parallelScan12/{id}")
     User parallelScan12(@PathVariable("id") Long id);
 

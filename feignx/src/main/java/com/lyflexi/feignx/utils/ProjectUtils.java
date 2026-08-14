@@ -1,12 +1,15 @@
 package com.lyflexi.feignx.utils;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -110,15 +113,54 @@ public class ProjectUtils {
                 continue;
             }
             try {
-                result.addAll(AnnotatedElementsSearch.searchPsiClasses(annotationClass, projectScope).findAll());
-            } catch (IllegalStateException | LinkageError e) {
-                // Kotlin 插件的 KotlinAnnotatedElementsSearcher 在 Analysis API 未就绪时会抛
-                // "Cannot find service KaGlobalSearchScopeMerger",导致整条注解查询中断;
-                // 捕获后回退到仅扫描 Java 源文件,保证 Java 端 Controller/Feign/启动类仍可被扫描到
+                collectJavaClassesByAnnotation(annotationClass, project, projectScope, result);
+            } catch (ProcessCanceledException | IndexNotReadyException e) {
+                // 取消/索引未就绪需原样抛出,由上层进度框架处理,不能被兜底逻辑吞掉
+                throw e;
+            } catch (RuntimeException | LinkageError e) {
+                // 兜底:极少数异常场景下回退到仅遍历 Java 源文件匹配注解
                 result.addAll(searchJavaClassesByAnnotation(annotationClass, projectScope));
             }
         }
         return new ArrayList<>(result);
+    }
+
+    /**
+     * 基于 Java 注解 stub 索引(JavaAnnotationIndex)收集标注指定注解的 Java 类。
+     * 直接查询 Java 注解索引,绕开 AnnotatedElementsSearch 扩展点——后者会触发 Kotlin 插件的
+     * KotlinAnnotatedElementsSearcher,在 Kotlin Analysis API 未就绪时会抛
+     * "Cannot find service KaGlobalSearchScopeMerger / KotlinProjectStructureProvider" 等异常,
+     * 直接导致整条查询中断、Controller/Feign 之间的 gutter 导航消失。
+     */
+    private static void collectJavaClassesByAnnotation(PsiClass annotationClass, Project project,
+                                                       GlobalSearchScope scope, Set<PsiClass> result) {
+        String shortName = annotationClass.getName();
+        if (shortName == null) {
+            return;
+        }
+        PsiManager psiManager = PsiManager.getInstance(project);
+        Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(shortName, project, scope);
+        for (PsiAnnotation annotation : annotations) {
+            // 类级注解的父节点是 PsiModifierList,其父节点才是被标注的类
+            // (注意:PsiAnnotation.getOwner() 对类级声明注解会返回 null,不能使用)
+            PsiElement parent = annotation.getContext();
+            if (!(parent instanceof PsiModifierList)) {
+                continue;
+            }
+            PsiElement owner = parent.getParent();
+            if (!(owner instanceof PsiClass)) {
+                continue;
+            }
+            // 精确匹配:解析注解引用,确认就是目标注解类(而非同名注解)
+            PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+            if (ref != null) {
+                PsiElement resolved = ref.resolve();
+                if (resolved == null || !psiManager.areElementsEquivalent(resolved, annotationClass)) {
+                    continue;
+                }
+            }
+            result.add((PsiClass) owner);
+        }
     }
 
     /**
