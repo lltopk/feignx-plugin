@@ -9,13 +9,11 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.openapi.util.Key;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBLabel;
@@ -26,6 +24,7 @@ import com.lyflexi.feignx.constant.RestIcons;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
 import com.lyflexi.feignx.utils.ControllerClassScanUtils;
 import com.lyflexi.feignx.utils.FeignClassScanUtils;
+import com.lyflexi.feignx.utils.ProjectUtils;
 import com.lyflexi.feignx.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +40,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -69,6 +67,12 @@ public class EndpointsPanel extends JPanel {
     private static final String ALL_ENDPOINT_TYPES = "全部";
 
     /**
+     * 面板实例注册表:供 LineMarkerProvider 等外部调用方按 Project 定位当前面板,
+     * 以实现「点击 gutter 直接导航到 EndpointsPanel 中具体的请求节点」。
+     */
+    private static final Key<EndpointsPanel> PANEL_KEY = Key.create("com.lyflexi.feignx.endpoints.panel");
+
+    /**
      * SpringBoot 启动类专用图标(经典 Spring logo,与 spring.svg 一致)
      */
     private static final Icon SPRING_ICON = IconLoader.getIcon("/icons/spring.svg", EndpointsPanel.class);
@@ -93,6 +97,7 @@ public class EndpointsPanel extends JPanel {
     public EndpointsPanel(Project project) {
         super(new BorderLayout());
         this.project = project;
+        project.putUserData(PANEL_KEY, this);
 
         treeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
         tree = new JTree(treeModel);
@@ -202,11 +207,18 @@ public class EndpointsPanel extends JPanel {
      * 索引未就绪时挂起等待,dumb 模式下扫描结果为空(与历史逻辑一致,不会抛异常)。
      */
     private void refresh() {
+        refresh(null);
+    }
+
+    /**
+     * 手动刷新,完成后在 EDT 上执行指定回调(如扫描完成后定位到指定节点)。
+     */
+    private void refresh(Runnable afterRebuild) {
         if (project.isDisposed()) {
             return;
         }
         if (DumbService.isDumb(project)) {
-            DumbService.getInstance(project).runWhenSmart(this::refresh);
+            DumbService.getInstance(project).runWhenSmart(() -> refresh(afterRebuild));
             return;
         }
         refreshButton.setEnabled(false);
@@ -225,9 +237,88 @@ public class EndpointsPanel extends JPanel {
                     snapshot = result;
                     refreshButton.setEnabled(true);
                     rebuildTree();
+                    if (afterRebuild != null) {
+                        afterRebuild.run();
+                    }
                 });
             }
         }.queue();
+    }
+
+    /**
+     * 外部入口:根据 Project 取到当前 EndpointsPanel 实例(LineMarkerProvider 点击导航用)。
+     */
+    public static EndpointsPanel getInstance(Project project) {
+        return project == null ? null : project.getUserData(PANEL_KEY);
+    }
+
+    /**
+     * 定位到指定路径的请求节点:清空搜索/过滤,确保节点可见后选中并滚动到该节点。
+     * 若当前快照尚未包含该路径,则触发一次后台刷新,完成后再次定位。
+     *
+     * @param path 目标请求完整路径(与树节点 HttpMappingInfo.path 一致)
+     */
+    public void navigateTo(String path) {
+        if (StringUtil.isBlank(path) || project.isDisposed()) {
+            return;
+        }
+        // 清空搜索与过滤,保证目标节点不被过滤掉
+        searchField.setText("");
+        methodCombo.setSelectedItem(ALL_METHODS);
+        endpointTypeCombo.setSelectedItem(ALL_ENDPOINT_TYPES);
+        rebuildTree();
+        if (selectNodeByPath(path)) {
+            return;
+        }
+        // 快照中无该节点(可能是索引尚未就绪或端点新增),后台刷新后重试定位
+        refresh(() -> selectNodeByPath(path));
+    }
+
+    /**
+     * 在树中查找路径匹配的 METHOD 节点,选中并滚动到可见位置。
+     */
+    private boolean selectNodeByPath(String path) {
+        DefaultMutableTreeNode root = (DefaultMutableTreeNode) treeModel.getRoot();
+        if (root == null) {
+            return false;
+        }
+        DefaultMutableTreeNode target = findMethodNode(root, path);
+        if (target == null) {
+            return false;
+        }
+        TreePath treePath = new TreePath(target.getPath());
+        // 逐级展开所有祖先节点(类节点默认收起),确保最深层的目标方法节点可见
+        TreePath parent = treePath.getParentPath();
+        while (parent != null) {
+            tree.expandPath(parent);
+            parent = parent.getParentPath();
+        }
+        tree.setSelectionPath(treePath);
+        tree.scrollPathToVisible(treePath);
+        return true;
+    }
+
+    /**
+     * 递归查找路径匹配的 METHOD 节点。
+     */
+    private static DefaultMutableTreeNode findMethodNode(DefaultMutableTreeNode node, String path) {
+        Object userObject = node.getUserObject();
+        if (userObject instanceof EndpointNode) {
+            EndpointNode endpointNode = (EndpointNode) userObject;
+            if (endpointNode.getKind() == EndpointNode.Kind.METHOD
+                    && endpointNode.getMappingInfo() != null
+                    && path.equals(endpointNode.getMappingInfo().getPath())) {
+                return node;
+            }
+        }
+        for (int i = 0; i < node.getChildCount(); i++) {
+            DefaultMutableTreeNode child = (DefaultMutableTreeNode) node.getChildAt(i);
+            DefaultMutableTreeNode found = findMethodNode(child, path);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
     }
 
     /**
@@ -295,21 +386,11 @@ public class EndpointsPanel extends JPanel {
     }
 
     /**
-     * 基于 IntelliJ 注解索引扫描标注 @SpringBootApplication 的启动类(仅工程源码范围)
+     * 扫描标注 @SpringBootApplication 的启动类(仅工程源码范围)。
+     * 复用 ProjectUtils 的注解扫描(内部已兜底处理 Kotlin 插件 Analysis API 未就绪导致的异常)。
      */
     private static List<PsiClass> scanSpringBootClasses(Project project) {
-        if (DumbService.isDumb(project)) {
-            return Collections.emptyList();
-        }
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-        PsiClass annotationClass = facade.findClass(SPRING_BOOT_APPLICATION, GlobalSearchScope.allScope(project));
-        if (annotationClass == null) {
-            return Collections.emptyList();
-        }
-        Collection<PsiClass> found = AnnotatedElementsSearch
-                .searchPsiClasses(annotationClass, GlobalSearchScope.projectScope(project))
-                .findAll();
-        return new ArrayList<>(found);
+        return ProjectUtils.searchClassesByAnnotation(project, SPRING_BOOT_APPLICATION);
     }
 
     private static int countMethods(List<EndpointClassData> classes) {
@@ -346,10 +427,10 @@ public class EndpointsPanel extends JPanel {
 
         int matched = 0;
         for (int i = 0; i < root.getChildCount(); i++) {
-            matched += countMatchedClasses((DefaultMutableTreeNode) root.getChildAt(i));
+            matched += countMatchedNodes((DefaultMutableTreeNode) root.getChildAt(i));
             tree.expandRow(i);
         }
-        statusLabel.setText("共 " + matched + " 个匹配类");
+        statusLabel.setText("共 " + matched + " 个匹配端点");
         statusLabel.setToolTipText("SpringMVC " + snapshot.controllerCount
                 + " / OpenFeign " + snapshot.feignCount
                 + " / SpringBoot " + snapshot.springBootClasses.size());
@@ -376,6 +457,7 @@ public class EndpointsPanel extends JPanel {
     private DefaultMutableTreeNode buildGroup(String title, EndpointNode.GroupType groupType, List<EndpointClassData> classes,
                                               String keyword, String methodFilter) {
         DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(EndpointNode.group(title, groupType));
+        boolean keywordBlank = StringUtil.isBlank(keyword);
         for (EndpointClassData classData : classes) {
             List<HttpMappingInfo> methods = classData.methods.stream()
                     .filter(m -> matches(m, keyword, methodFilter))
@@ -383,13 +465,22 @@ public class EndpointsPanel extends JPanel {
             if (methods.isEmpty()) {
                 continue;
             }
-            DefaultMutableTreeNode classNode = new DefaultMutableTreeNode(
-                    EndpointNode.clazz(classData.psiClass, classData.displayName, classData.qualifiedName, groupType));
-            for (HttpMappingInfo method : methods) {
-                classNode.add(new DefaultMutableTreeNode(
-                        EndpointNode.method(method.getPsiMethod(), method, displayMethod(method), method.getPath(), groupType)));
+            if (keywordBlank) {
+                // 无搜索关键字:按「类 -> 方法」两级分组展示
+                DefaultMutableTreeNode classNode = new DefaultMutableTreeNode(
+                        EndpointNode.clazz(classData.psiClass, classData.displayName, classData.qualifiedName, groupType));
+                for (HttpMappingInfo method : methods) {
+                    classNode.add(new DefaultMutableTreeNode(
+                            EndpointNode.method(method.getPsiMethod(), method, displayMethod(method), method.getPath(), groupType)));
+                }
+                groupNode.add(classNode);
+            } else {
+                // 有关键字:直接平铺展示最深层的请求节点,省去再点开类的一层
+                for (HttpMappingInfo method : methods) {
+                    groupNode.add(new DefaultMutableTreeNode(
+                            EndpointNode.method(method.getPsiMethod(), method, displayMethod(method), method.getPath(), groupType)));
+                }
             }
-            groupNode.add(classNode);
         }
 
         if (groupNode.getChildCount() == 0) {
@@ -421,11 +512,19 @@ public class EndpointsPanel extends JPanel {
         return groupNode;
     }
 
-    private static int countMatchedClasses(DefaultMutableTreeNode groupNode) {
+    /**
+     * 统计分组下的匹配节点数:
+     * 搜索(平铺)场景直接统计 METHOD 节点;非搜索场景按类节点统计(类下方法默认收起)。
+     */
+    private static int countMatchedNodes(DefaultMutableTreeNode groupNode) {
         int count = 0;
         for (int i = 0; i < groupNode.getChildCount(); i++) {
             Object userObject = ((DefaultMutableTreeNode) groupNode.getChildAt(i)).getUserObject();
-            if (userObject instanceof EndpointNode && ((EndpointNode) userObject).getKind() == EndpointNode.Kind.CLASS) {
+            if (!(userObject instanceof EndpointNode)) {
+                continue;
+            }
+            EndpointNode.Kind kind = ((EndpointNode) userObject).getKind();
+            if (kind == EndpointNode.Kind.METHOD || kind == EndpointNode.Kind.CLASS) {
                 count++;
             }
         }
@@ -490,8 +589,14 @@ public class EndpointsPanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
-                    TreePath path = tree.getPathForLocation(e.getX(), e.getY());
+                    // 使用 getClosestPathForLocation 而非 getPathForLocation,使双击整行(含文字右侧空白)也能命中节点
+                    TreePath path = tree.getClosestPathForLocation(e.getX(), e.getY());
                     if (path == null) {
+                        return;
+                    }
+                    // 仅当 y 落在该行垂直范围内才导航,避免在树下方空白区域双击误导航到最后一个节点
+                    Rectangle bounds = tree.getPathBounds(path);
+                    if (bounds == null || e.getY() < bounds.y || e.getY() >= bounds.y + bounds.height) {
                         return;
                     }
                     Object userObject = ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
@@ -514,24 +619,17 @@ public class EndpointsPanel extends JPanel {
     }
 
     /**
-     * 跳转到 PSI 元素源码。PSI 读取(valid/containingFile/textOffset)包裹在 ReadAction 内,导航本身在 EDT 上执行。
+     * 跳转到 PSI 元素源码。通过 PsiNavigationSupport 拿到 Navigatable(内部处理 getNavigationElement 与
+     * 文件/偏移提取,与 gutter 导航同源),导航在 EDT 上执行并请求焦点。
      */
     private static void navigateTo(PsiElement element) {
-        Project targetProject = element.getProject();
-        VirtualFile[] file = {null};
-        int[] offset = {0};
-        ApplicationManager.getApplication().runReadAction(() -> {
-            if (element.isValid()) {
-                file[0] = element.getContainingFile().getVirtualFile();
-                offset[0] = element.getTextOffset();
-            }
-        });
-        if (file[0] == null) {
+        if (element == null || !element.isValid()) {
             return;
         }
-        PsiNavigationSupport.getInstance()
-                .createNavigatable(targetProject, file[0], offset[0])
-                .navigate(true);
+        Navigatable navigatable = PsiNavigationSupport.getInstance().getDescriptor(element);
+        if (navigatable != null && navigatable.canNavigate()) {
+            navigatable.navigate(true);
+        }
     }
 
     /**

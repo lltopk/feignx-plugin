@@ -5,7 +5,7 @@
 
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
-    <name>FeignClient Assistant</name>
+    <name>FeignClient Assistant With RequestX</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor email="liuyanoutsee@outlook.com" url="https://github.com/lltopk">lltopk</vendor>
@@ -13,7 +13,7 @@
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
-    <description><![CDATA[FeignClient Assistant is a free IntelliJ IDEA plugin for SpringCloud OpenFeign. It enables bidirectional cross-module navigation between FeignClient interfaces and remote service ApiController classes, parses server.servlet.context-path and spring.mvc.servlet.path from yml/yaml/properties configuration files, and supports one-click URL path copying to the clipboard. Former name: FeignX / Navigator4URL OpenFeign RestController.<br>
+    <description><![CDATA[FeignClient Assistant With RequestX is a free IntelliJ IDEA plugin for SpringCloud OpenFeign. It enables bidirectional cross-module navigation between FeignClient interfaces and remote service ApiController classes, parses server.servlet.context-path and spring.mvc.servlet.path from yml/yaml/properties configuration files, and supports one-click URL path copying to the clipboard. Former name: FeignX / Navigator4URL OpenFeign RestController.<br>
 <br>
 <a href="https://github.com/lltopk/feignx-plugin">GitHub Star</a> | <a href="https://github.com/lltopk/feignx-plugin/issues">Issues</a> | <a href="https://github.com/lltopk/feignx-plugin/pulls">Pull Request</a>
 <br>
@@ -22,16 +22,16 @@
 2. It supports `server.servlet.context-path` and `spring.mvc.servlet.path` by parsing yml/yaml/properties.<br>
 3. It is sufficiently accurate with options, after many rounds of optimization.<br>
 4. It supports real-time dynamic parsing of the target interface without the need for manual cache refreshing.<br>
-5. It supports url full path copying to the clipboard (both Feign and Controller interfaces), in order to help Vim users.<br>
-6. It provides a right-side `FeignClient Assistant Endpoints` tool window listing all SpringBoot startup classes, SpringMVC and OpenFeign endpoints in a tree (grouped by type with distinct icons), featuring fuzzy path search, HttpType/EndpointType filters, refresh, and expand/collapse-all buttons.<br>
+5. It provides a right-side `FeignClient Assistant With RequestX Endpoints` tool window listing all SpringBoot startup classes, SpringMVC and OpenFeign endpoints in a tree (grouped by type with distinct icons), featuring fuzzy path search, HttpType/EndpointType filters, refresh, and expand/collapse-all buttons.<br>
+6. It lets you send real HTTP requests right inside the endpoints tool window: select a request node to auto-generate an editable IntelliJ HTTP Client script (with `@RequestBody` / `@RequestParam` / `@PathVariable` support), execute it with one click and inspect the response, plus a request history (saved to the project's `.idea/feignx-history`, searchable and one-click reloadable).<br>
 <br>
-<b>中文简介: FeignClient Assistant 是一款免费的 SpringCloud Feign 导航助手。</b><br>
-1. 受 MybatisX 和方法级导航侧边栏 `bird` 的启发，它可以在 FeignClient 与远程服务的 ApiController 之间灵活地跨模块来回跳转。例如 feignClient -> ApiController 且 ApiController -> feignClient。<br>
+<b>中文简介: FeignClient Assistant With RequestX 是一款免费的 SpringCloud Feign 以及 HTTP 请求导航与脚本助手。</b><br>
+1. 受 `MybatisX` 和方法级导航侧边栏 `bird` 的启发，它可以在 FeignClient 与远程服务的 ApiController 之间灵活地跨模块来回跳转。例如 feignClient -> ApiController 且 ApiController -> feignClient。<br>
 2. 它通过解析 `yml/yaml/properties` 文件来支持 `server.servlet.context-path` 和 `spring.mvc.servlet.path`。<br>
 3. 经过多轮优化后，目标端点候选项已具有足够的准确性。<br>
 4. 它支持对目标接口进行实时动态解析，无需手动刷新缓存。<br>
-5. 它支持将完整的 URL 路径复制到剪贴板（包括 Feign 和 Controller 接口），以便帮助使用 Vim 的用户。<br>
-6. 它提供右侧 `FeignClient Assistant Endpoints` 端点侧边栏，以树形结构集中展示工程内全部 SpringBoot 启动类、SpringMVC 与 OpenFeign 端点（按类型分组、图标区分），支持路径模糊搜索、HttpType/EndpointType 分类过滤、刷新与全部展开/收起。<br>]]></description>
+5. 它提供右侧 `FeignClient Assistant With RequestX Endpoints` 端点侧边栏，以树形结构集中展示工程内全部 SpringBoot 启动类、SpringMVC 与 OpenFeign 端点（按类型分组、图标区分），支持路径模糊搜索、HttpType/EndpointType 分类过滤、刷新与全部展开/收起。<br>
+6. 它支持在端点侧边栏内发送真实 HTTP 请求：选中请求节点自动生成可编辑的 IntelliJ HTTP Client 脚本（兼容 `@RequestBody` / `@RequestParam` / `@PathVariable`），一键执行并展示响应，同时记录请求历史（保存到工程 `.idea/feignx-history`，支持搜索与一键回填）。<br>]]></description>
 
     <change-notes>
         <![CDATA[update logs: https://github.com/lltopk/feignx-plugin/blob/main/feignx/docs/updateLog.md]]>
@@ -56,17 +56,14 @@
         <codeInsight.lineMarkerProvider language="JAVA"
                                         implementationClass="com.lyflexi.feignx.provider.C2FLineMarkerProvider"/>
 
-
         <codeInsight.lineMarkerProvider language="JAVA"
-                                        implementationClass="com.lyflexi.feignx.provider.CopyControllerUrlLineMarkerProvider"/>
-        <codeInsight.lineMarkerProvider language="JAVA"
-                                        implementationClass="com.lyflexi.feignx.provider.CopyFeignUrlLineMarkerProvider"/>
+                                        implementationClass="com.lyflexi.feignx.provider.NavigateToEndpointsLineMarkerProvider"/>
 
 
         <!--    <toolWindow id="FeignX" secondary="false" icon="AllIcons.Toolwindows.WebToolWindow" anchor="bottom"-->
         <!--                factoryClass="com.lyflexi.feignx.toolwindow.SearchToolWindowFactory"/>-->
 
-        <notificationGroup id="FeignClient Assistant"
+        <notificationGroup id="FeignClient Assistant With RequestX"
                            displayType="BALLOON"
                            key="notification.group.name"/>
 
@@ -85,7 +82,7 @@
                                 order="last"/>
 
         <!-- 左下方"feignx assistant endpoints"端点侧边栏(独立功能,展示工程内全部 SpringMVC/Feign 端点) -->
-        <toolWindow id="FeignClient Assistant Endpoints"
+        <toolWindow id="FeignClient Assistant With RequestX Endpoints"
                     anchor="bottom"
                     secondary="true"
                     icon="/icons/openApi.svg"

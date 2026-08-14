@@ -1,11 +1,13 @@
 package com.lyflexi.feignx.utils;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
@@ -94,7 +96,7 @@ public class ProjectUtils {
      * 注解索引扫描通用实现
      * 注意:查找注解类本身必须用 allScope(注解类在三方依赖库中),而检索被标注的业务类用 projectScope
      */
-    private static List<PsiClass> searchClassesByAnnotation(Project project, String... annotationQualifiedNames) {
+    public static List<PsiClass> searchClassesByAnnotation(Project project, String... annotationQualifiedNames) {
         if (DumbService.isDumb(project)) {
             return Collections.emptyList();
         }
@@ -107,9 +109,50 @@ public class ProjectUtils {
             if (Objects.isNull(annotationClass)) {
                 continue;
             }
-            result.addAll(AnnotatedElementsSearch.searchPsiClasses(annotationClass, projectScope).findAll());
+            try {
+                result.addAll(AnnotatedElementsSearch.searchPsiClasses(annotationClass, projectScope).findAll());
+            } catch (IllegalStateException | LinkageError e) {
+                // Kotlin 插件的 KotlinAnnotatedElementsSearcher 在 Analysis API 未就绪时会抛
+                // "Cannot find service KaGlobalSearchScopeMerger",导致整条注解查询中断;
+                // 捕获后回退到仅扫描 Java 源文件,保证 Java 端 Controller/Feign/启动类仍可被扫描到
+                result.addAll(searchJavaClassesByAnnotation(annotationClass, projectScope));
+            }
         }
         return new ArrayList<>(result);
+    }
+
+    /**
+     * 回退扫描:仅遍历工程内的 Java 源文件,按注解全限定名匹配类(含内部类)。
+     * 不经过 AnnotatedElementsSearch,从而绕开 Kotlin 插件的注解搜索扩展点,避免其服务缺失导致的异常。
+     */
+    private static List<PsiClass> searchJavaClassesByAnnotation(PsiClass annotationClass, GlobalSearchScope scope) {
+        List<PsiClass> result = new ArrayList<>();
+        String annotationQualifiedName = annotationClass.getQualifiedName();
+        if (annotationQualifiedName == null) {
+            return result;
+        }
+        PsiManager psiManager = PsiManager.getInstance(annotationClass.getProject());
+        Collection<VirtualFile> javaFiles = FileTypeIndex.getFiles(JavaFileType.INSTANCE, scope);
+        for (VirtualFile file : javaFiles) {
+            PsiFile psiFile = psiManager.findFile(file);
+            if (!(psiFile instanceof PsiJavaFile)) {
+                continue;
+            }
+            collectAnnotatedClasses(((PsiJavaFile) psiFile).getClasses(), annotationQualifiedName, result);
+        }
+        return result;
+    }
+
+    /**
+     * 递归收集带指定注解的类(含内部类)
+     */
+    private static void collectAnnotatedClasses(PsiClass[] classes, String annotationQualifiedName, List<PsiClass> result) {
+        for (PsiClass psiClass : classes) {
+            if (psiClass.hasAnnotation(annotationQualifiedName)) {
+                result.add(psiClass);
+            }
+            collectAnnotatedClasses(psiClass.getInnerClasses(), annotationQualifiedName, result);
+        }
     }
 
 

@@ -1,14 +1,14 @@
-### 🚀FeignClient Assistant:v1.0.0
+### 🚀FeignClient Assistant With RequestX:v1.0.0
 - 跨模块实现FeignClient导航ApiController功能：FeignClient-ApiController Mutually Navigation
 - 跨模块实现ApiController导航FeignClient功能：ApiController-FeignClient Mutually Navigation
 
-### 🚀FeignClient Assistant:v2.1.0
+### 🚀FeignClient Assistant With RequestX:v2.1.0
 适配最新版本的IntelliJ IDEA
 
-### 🐞FeignClient Assistant:v3.0.0
+### 🐞FeignClient Assistant With RequestX:v3.0.0
 [fix] 重大bug修复，修复了由于缓存导致的目标接口动态监测失效的问题
 
-### 🚀FeignClient Assistant:v4.0.0
+### 🚀FeignClient Assistant With RequestX:v4.0.0
 [feat] 重大功能更新，server端适配了springboot配置文件application.properties/application.yml/application.yaml的解析机制：
 
 支持以下配置的解析
@@ -57,7 +57,7 @@ public interface UserClient {
 
 yml/yaml配置同上。
 
-### 🚀FeignClient Assistant:v4.1.1
+### 🚀FeignClient Assistant With RequestX:v4.1.1
 
 适配了最新版IDEA的Light主题，欢迎在IDEA内在线更新至4.1.1版本（三天后上线），或者提前安装离线版体验！
 https://github.com/lyflexi/feignx-plugin/releases/tag/v4.1.1
@@ -73,13 +73,13 @@ https://github.com/lyflexi/feignx-plugin/releases/tag/v4.1.1
 
 开发社区：https://intellij-support.jetbrains.com/hc/en-us/community/topics/200366979-IntelliJ-IDEA-Open-API-and-Plugin-Development
 
-### 🚀FeignClient Assistant:v4.1.3
+### 🚀FeignClient Assistant With RequestX:v4.1.3
 thanks my friend's pr : https://github.com/Halfmoonly/feignx-plugin/pull/9
 1. Adapted bootstrap.properties/bootstrap.yml/bootstrap.yaml
 2. Adapted many writtings of path，as @FeignClient(path = "/sys") and @FeignClient(path = "sys") and @FeignClient(path = "sys/")
 
 
-### 🚀FeignClient Assistant:v4.1.5
+### 🚀FeignClient Assistant With RequestX:v4.1.5
 极少数分布式场景下的nacos需要以下配置，往往会配置在本地的bootstrap.yml/yaml中，而非application.yml/yaml中
 
 1. server.servlet.context-path = /hello
@@ -87,7 +87,7 @@ thanks my friend's pr : https://github.com/Halfmoonly/feignx-plugin/pull/9
 
 此版本修复了FeignX读取本地bootstrap.yml/yaml中上述配置失效的问题
 
-### 🐞FeignClient Assistant:v4.1.6
+### 🐞FeignClient Assistant With RequestX:v4.1.6
 FeignX 4.1.5 is binary incompatible with IntelliJ IDEA Ultimate IU-193.7288.26 due to the following problem Method not found . This can lead to NoSuchMethodError exception at runtime.
 
 Feignx:v4.1.6 resolve IntelliJ IDEA Ultimate 2019.3.51 compatibility problem.
@@ -97,17 +97,17 @@ Feignx:v4.1.6 resolve IntelliJ IDEA Ultimate 2019.3.51 compatibility problem.
 - Method SearchControllerAction.navigateToControllerCode(...) contains an invokestatic instruction referencing an unresolved method PsiEditorUtil.findEditor(PsiElement).
 
 
-### 🚀 FeignClient Assistant V5.1.0 更新内容
+### 🚀 FeignClient Assistant With RequestX V5.1.0 更新内容
 reslove issue #6：https://github.com/Halfmoonly/feignx-plugin/issues/6
 
 
-1. 我们又更名啦[笑哭]，由FeignX更名为FeignClient Assistant
+1. 我们又更名啦[笑哭]，由FeignX更名为FeignClient Assistant With RequestX
 2. 为了方便Vim党，我们支持了url完整路径复制至剪切板（Feign接口和Controller接口均支持）
 3. 欢迎Star：https://github.com/Halfmoonly/feignx-plugin
 
 朋友们记得先将zip解压出jar包，再离线安装jar包哟~~：https://github.com/user-attachments/files/19149196/Navigator4URL.OpenFeign.RestController-5.1.0.zip
 
-### 🐞 FeignClient Assistant V5.1.1 更新内容
+### 🐞 FeignClient Assistant With RequestX V5.1.1 更新内容
 修复分支：hotfix/main-copy-notify
 
 1. 我们修复了一键复制URL功能的消息通知失败的问题，以及偶先空指针的现象
@@ -119,26 +119,26 @@ reslove issue #6：https://github.com/Halfmoonly/feignx-plugin/issues/6
 4. 我们优化了一键复制URL功能的Copy-Gutter图标设计，更加的优雅
 
 
-### 🐞 FeignClient Assistant V5.1.2 更新内容
+### 🐞 FeignClient Assistant With RequestX V5.1.2 更新内容
 
 1. 我们修复了https://github.com/Halfmoonly/feignx-plugin/issues/11，这曾经是个已经被修复但忘记合并至主分支的修复分支：hotfix/main-fix-bootstrap，见：https://github.com/Halfmoonly/feignx-plugin/issues/8
 
-### 🚀 FeignClient Assistant V5.2.1 更新内容
+### 🚀 FeignClient Assistant With RequestX V5.2.1 更新内容
 对应分支：feat/main-parallel
 
 默认IO密集型程序核心线程数为`2*N`，并自定义了线程池，优化初始化过程中，构建出全量接口方法对象HttpMappingInfos的速度（ApiControllers和FeignClients）
 
-### 🐞 FeignClient Assistant V5.3.1 更新内容
+### 🐞 FeignClient Assistant With RequestX V5.3.1 更新内容
 对应分支：main-fix-dead
 
 1. 修复了偶发的卡死现象
 
-### 🐞 FeignClient Assistant V5.3.2 更新内容
+### 🐞 FeignClient Assistant With RequestX V5.3.2 更新内容
 对应分支：main-fix-dead2
 
 1. 修复了偶发的卡死现象
 
-### 🐞🚀 FeignClient Assistant V5.4.0 更新内容
+### 🐞🚀 FeignClient Assistant With RequestX V5.4.0 更新内容
 对应分支：hotfix/main-dead
 
 1. feat: 合并了来自开发者的一个特性PR：https://github.com/Halfmoonly/feignx-plugin/pull/14 ,支持Restful注解path中的变量或者静态常量的解析（FeignClient和ApiController），感谢@wdhcr
@@ -147,7 +147,7 @@ reslove issue #6：https://github.com/Halfmoonly/feignx-plugin/issues/6
 
 2. fix: 重大bug修复，彻底修复了打开多个IDEA项目时候偶发的卡死现象，我们定位到是线程池的问题并做出了修复与避免。希望反馈的朋友们耐心等待此版本上架
 
-### 🚀 FeignClient Assistant v5.5.0更新内容
+### 🚀 FeignClient Assistant With RequestX v5.5.0更新内容
 对应分支feat/main-tab-svg
 
 1. 我们上线了FeignClient类文件和Tab页签的图标替换功能，默认开启，用户可以在IDEA设置面板中关闭，修改配置后记得重启IDEA。
@@ -155,7 +155,7 @@ reslove issue #6：https://github.com/Halfmoonly/feignx-plugin/issues/6
 
 ![user-settings.png](../pics/user-settings.png)
 
-### 🐞 FeignClient Assistant v5.5.1版本修复如下异常
+### 🐞 FeignClient Assistant With RequestX v5.5.1版本修复如下异常
 
 修复分支：hotfix/main-fix-tabsvg
 
@@ -184,68 +184,68 @@ invalidated at: see attachment
     at com.lyflexi.feignx.provider.C2FLineMarkerProvider.collectNavigationMarkers(Controller2FeignLineMarkerProvider.java:43)
 ...
 ```
-### 🐞 FeignClient Assistant v5.5.2版本修复如下异常
+### 🐞 FeignClient Assistant With RequestX v5.5.2版本修复如下异常
 
 修复分支：hotfix/main-fix-tabsvg2
 
 1. 修复了回车键可能导致的方法旁gutter失效的问题
 
-### 🐞 FeignClient Assistant v5.5.3更新内容
+### 🐞 FeignClient Assistant With RequestX v5.5.3更新内容
 修复分支：main
 
 1. 修复了二次打开项目的时候,有gutter,但无法跳转的问题
 
-### 🐞 FeignClient Assistant v5.5.4更新内容
+### 🐞 FeignClient Assistant With RequestX v5.5.4更新内容
 修复分支：hotfix/main-fix-gitpull
 
 1. 修复了git pull操作变更了psiclass导致的gutter跳转失效的问题
 
-### 🐞 FeignClient Assistant v5.5.5更新内容
+### 🐞 FeignClient Assistant With RequestX v5.5.5更新内容
 修复分支：main
 
 1. 修复了异常：invalidated at: see attachment
 
-### 🐞 FeignClient Assistant v5.5.6更新内容
+### 🐞 FeignClient Assistant With RequestX v5.5.6更新内容
 修复分支：main
 
 1. 修复了异常：java.lang.Throwable: Smart pointers must not be created during PSI changes
 
-### 🐞 FeignClient Assistant v5.5.7更新内容
+### 🐞 FeignClient Assistant With RequestX v5.5.7更新内容
 修复分支：main
 
 1. 修复了异常：PsiInvalidElementAccessException
 
-### 🐞 FeignClient Assistant v5.5.8更新内容
+### 🐞 FeignClient Assistant With RequestX v5.5.8更新内容
 修复分支：main
 
 1. 重新设计了UI，修复了图标在Tab页签中无法居左显示的问题。
 
-### 🚀 FeignClient Assistant v5.6.0更新内容
+### 🚀 FeignClient Assistant With RequestX v5.6.0更新内容
 更新分支：main
 
 1. 过滤了不必要的psi监听事件消费，提升了psiclass的监听处理性能
 
-### 🐞 FeignClient Assistant v5.6.1更新内容
+### 🐞 FeignClient Assistant With RequestX v5.6.1更新内容
 修复分支：hotfix/main-fix-psichange-dumb
 
 1. 当切换git分支的场景下，修复了当前项目psichange事件监听消费处，索引还未更新完成导致的Dumb异常
 
-### 🚀 FeignClient Assistant v5.6.2更新内容
+### 🚀 FeignClient Assistant With RequestX v5.6.2更新内容
 优化分支：main
 
 1. 优化了UI
 
-### 🚀 FeignClient Assistant v5.6.3.1更新内容
+### 🚀 FeignClient Assistant With RequestX v5.6.3.1更新内容
 优化分支：feat/main-ui2
 
 1. 优化了ApiController控制器侧的UI
 
-### 🐞 FeignClient Assistant v5.6.3.2更新内容
+### 🐞 FeignClient Assistant With RequestX v5.6.3.2更新内容
 修复分支：hotfix/main-fix-duplicate-TestEntityManagerAutoConfiguration
 
 1. 使用intellij自家判断注解的API，修复了java.lang.Throwable: PersistentFS[connected: true, ownData: com.intellij.openapi.vfs.newvfs.impl.VfsData@675c6da6] returned duplicate file names('TestEntityManagerAutoConfiguration.class', 'TestEntityManagerAutoConfiguration.class') caseSensitive: true SystemInfo.isFileSystemCaseSensitive: false isCaseSensitive(): true SystemInfo.OS: Windows 10.0 wasChildrenLoaded: true in the dir: jar://C:/Users/hasee/.m2/repository/org/springframework/boot/spring-boot-test-autoconfigure/3.0.0/spring-boot-test-autoconfigure-3.0.0.jar!/org/springframework/boot/test/autoconfigure/orm/jpa; 9 children: ["AutoConfigureDataJpa.class"; nameId: 189261; id: 98540 (unknown), "DataJpaTypeExcludeFilter.class"; nameId: 189274; id: 98542 (unknown), "TestEntityManagerAutoConfiguration.class"; nameId: 189302; id: 98544 (unknown), "DataJpaTestContextBootstrapper.class"; nameId: 189323; id: 98547 (unknown), "Te...
 
-### 🚀 FeignClient Assistant v5.6.4.0更新内容
+### 🚀 FeignClient Assistant With RequestX v5.6.4.0更新内容
 优化分支：feat/main-performance
 
 1. 我们发现在大型项目中插件的初始化速度较慢，v5.6.4.0通过排除三方依赖中的libs，仅保留用户文件的扫描，提升了PSI扫描的速度
@@ -256,7 +256,7 @@ https://plugins.jetbrains.com/plugin/25604-feignclient-assistant
 
 IDEA内插件市场一键安装最方便哟~~
 
-### 🐞 FeignClient Assistant v5.6.4.5更新内容
+### 🐞 FeignClient Assistant With RequestX v5.6.4.5更新内容
 
 修复了 issues #21 / #23：
 
@@ -266,7 +266,7 @@ IDEA内插件市场一键安装最方便哟~~
 
 同时顺带修复了 issue #17：支持从 `application-{profile}.yml/yaml/properties`、`bootstrap-{profile}.yml` 等 profile 专属配置文件中解析 `server.servlet.context-path` / `spring.mvc.servlet.path`（按 `spring.profiles.active` 解析，maven 占位符场景兜底扫描 profile 文件）。
 
-### 🐞 FeignClient Assistant v5.6.4.6更新内容
+### 🐞 FeignClient Assistant With RequestX v5.6.4.6更新内容
 
 修复了 issue #26：feign 接口**内部**定义的字符串变量拼接跳转不了，如：
 
@@ -283,7 +283,7 @@ public interface TradeInnerOrderFeignApi {
 2. 常量解析进一步增强：支持括号包裹的拼接表达式，如 `@GetMapping((CONST) + "/xxx")`。
 3. 配套新增 sample 测试用例：`UserClientSelfConst`（feign 侧内部变量拼接 + 嵌套常量）+ `SelfConstServerController`（server 侧）。
 
-### 🚀 FeignClient Assistant v5.6.4.7更新内容
+### 🚀 FeignClient Assistant With RequestX v5.6.4.7更新内容
 
 新增 issue #25 的兜底功能：StatusBar 右下角手动刷新。
 
@@ -295,7 +295,7 @@ public interface TradeInnerOrderFeignApi {
 4. 图标 hover 提示为英文：`Refresh all FeignClients and Controllers`。
 5. 状态栏图标引用 `icons/pluginIcon.svg`（与 `META-INF/pluginIcon.svg` 同内容的副本）：插件类加载器下直接加载 `/META-INF/pluginIcon.svg` 会显示默认占位图标（咖啡杯），而 `/icons/` 目录与 gutter 图标同源、已验证可正常加载；`META-INF/pluginIcon.svg` 仍保留用于插件市场图标。
 
-### 🚀 FeignClient Assistant v5.7.0更新内容
+### 🚀 FeignClient Assistant With RequestX v5.7.0更新内容
 
 新增独立功能:右侧"feignx assistant endpoints"端点侧边栏。
 
@@ -306,10 +306,11 @@ public interface TradeInnerOrderFeignApi {
 5. 双击类节点可跳转到该类源码,双击请求路径节点可跳转到对应接口方法。
 6. 该功能完全独立实现于 com.lyflexi.feignx.toolwindow 包,不修改任何历史 gutter / 状态栏 / 配置代码,仅复用已有公共扫描工具类。
 
-### 🚀 FeignClient Assistant v5.7.1更新内容
+### 🚀 FeignClient Assistant With RequestX v5.7.1更新内容
 更新分支：main
 
 1. 端点侧边栏右侧新增请求调试面板：左侧搜索树保持不变，右侧布局分为左右两块。
 2. 左块：点击具体请求节点时，自动生成标准 HTTP 脚本模板（支持 GET / POST / PUT / DELETE），并兼容三类参数——`@RequestBody` 请求体（递归解析实体类及其字段，生成带字段的 JSON 模板，支持嵌套对象/集合/枚举/日期类型）、`@RequestParam` 请求参数（拼接为 query 串）、`@PathVariable` 路径参数（替换路径占位符为示例值）。
-3. 左块顶部提供基础地址输入框（默认 `http://localhost:8080`）与「执行」按钮，支持一键执行 HTTP 脚本；脚本基于 IntelliJ HTTP Client 格式，可直接编辑。
-4. 右块展示最近一次请求的响应体（状态码 + 响应头 + 响应体 + 耗时），请求在网络后台线程执行，不阻塞 UI。
+3. 左块顶部提供基础地址输入框（默认 `http://localhost:8080`）与「执行」按钮，点击后在网络后台线程发送真实 HTTP 请求；脚本基于 IntelliJ HTTP Client 格式，可自由编辑。
+4. 右块展示最近一次请求的响应体（状态码 + 响应头 + 响应体 + 耗时），请求在后台线程执行，不阻塞 UI。
+5. 新增请求历史功能：每次执行后自动将「请求脚本 + 响应结果」落盘到当前工程 `.idea/feignx-history` 目录（按时间倒序），右块「历史请求」按钮可弹出历史列表（支持输入过滤），选中即可一键回填脚本与响应，方便复用与追溯。

@@ -52,7 +52,7 @@ public class FeignRefreshStatusBarWidget implements StatusBarWidget, StatusBarWi
 
     @Override
     public @Nullable String getTooltipText() {
-        return "FeignClient Assistant refresh all feignClients and controllers";
+        return "FeignClient Assistant With RequestX refresh all feignClients and controllers";
     }
 
     @Override

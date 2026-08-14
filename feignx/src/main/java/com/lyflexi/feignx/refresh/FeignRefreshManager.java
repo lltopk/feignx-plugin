@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class FeignRefreshManager {
 
-    private static final String NOTIFICATION_GROUP = "FeignClient Assistant";
+    private static final String NOTIFICATION_GROUP = "FeignClient Assistant With RequestX";
 
     private FeignRefreshManager() {
     }
