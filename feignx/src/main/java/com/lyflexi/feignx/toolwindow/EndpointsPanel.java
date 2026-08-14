@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
@@ -82,6 +83,7 @@ public class EndpointsPanel extends JPanel {
     private final JComboBox<String> endpointTypeCombo;
     private final JButton refreshButton;
     private final JBLabel statusLabel;
+    private final EndpointRequestPanel requestPanel;
 
     /**
      * 最近一次全量扫描的纯字符串快照(EDT 树重建只读它,不碰 PSI)
@@ -101,6 +103,7 @@ public class EndpointsPanel extends JPanel {
         tree.setBackground(UIUtil.getTreeBackground());
         tree.setCellRenderer(new EndpointTreeCellRenderer());
         installDoubleClickNavigation();
+        installSelectionListener();
 
         JBScrollPane scrollPane = new JBScrollPane(tree);
         scrollPane.getViewport().setOpaque(true);
@@ -163,8 +166,15 @@ public class EndpointsPanel extends JPanel {
         statusLabel = new JBLabel(" ");
         statusLabel.setBorder(JBUI.Borders.empty(2, 6));
 
+        requestPanel = new EndpointRequestPanel(project);
+
+        JBSplitter splitPane = new JBSplitter(false, 0.4f);
+        splitPane.setDividerWidth(1);
+        splitPane.setFirstComponent(scrollPane);
+        splitPane.setSecondComponent(requestPanel);
+
         add(topBar, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+        add(splitPane, BorderLayout.CENTER);
         add(statusLabel, BorderLayout.SOUTH);
 
         refresh();
@@ -377,7 +387,7 @@ public class EndpointsPanel extends JPanel {
                     EndpointNode.clazz(classData.psiClass, classData.displayName, classData.qualifiedName, groupType));
             for (HttpMappingInfo method : methods) {
                 classNode.add(new DefaultMutableTreeNode(
-                        EndpointNode.method(method.getPsiMethod(), displayMethod(method), method.getPath(), groupType)));
+                        EndpointNode.method(method.getPsiMethod(), method, displayMethod(method), method.getPath(), groupType)));
             }
             groupNode.add(classNode);
         }
@@ -449,6 +459,30 @@ public class EndpointsPanel extends JPanel {
             tag = requestMethod;
         }
         return tag + "  " + (info.getPath() == null ? "" : info.getPath());
+    }
+
+    /**
+     * 选中请求方法节点时,在右侧面板生成对应 HTTP 脚本模板;选中非方法节点或取消选中时清空脚本区。
+     */
+    private void installSelectionListener() {
+        tree.addTreeSelectionListener(e -> {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+            if (node == null) {
+                requestPanel.clear();
+                return;
+            }
+            Object userObject = node.getUserObject();
+            if (!(userObject instanceof EndpointNode)) {
+                requestPanel.clear();
+                return;
+            }
+            EndpointNode endpointNode = (EndpointNode) userObject;
+            if (endpointNode.getKind() == EndpointNode.Kind.METHOD) {
+                requestPanel.showScript(endpointNode.getMappingInfo());
+            } else {
+                requestPanel.clear();
+            }
+        });
     }
 
     private void installDoubleClickNavigation() {

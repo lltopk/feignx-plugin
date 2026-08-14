@@ -305,3 +305,11 @@ public interface TradeInnerOrderFeignApi {
 4. 顶部支持:按路径模糊搜索(contains,忽略大小写) + HttpType 请求类型(GET/POST/PUT/DELETE)下拉过滤 + EndpointType(SpringBoot/SpringMVC/OpenFeign)分类下拉过滤,左上角提供刷新按钮,点击后台重新全量扫描;新增"全部展开/全部收起"按钮。
 5. 双击类节点可跳转到该类源码,双击请求路径节点可跳转到对应接口方法。
 6. 该功能完全独立实现于 com.lyflexi.feignx.toolwindow 包,不修改任何历史 gutter / 状态栏 / 配置代码,仅复用已有公共扫描工具类。
+
+### 🚀 FeignClient Assistant v5.7.1更新内容
+更新分支：main
+
+1. 端点侧边栏右侧新增请求调试面板：左侧搜索树保持不变，右侧布局分为左右两块。
+2. 左块：点击具体请求节点时，自动生成标准 HTTP 脚本模板（支持 GET / POST / PUT / DELETE），并兼容三类参数——`@RequestBody` 请求体（递归解析实体类及其字段，生成带字段的 JSON 模板，支持嵌套对象/集合/枚举/日期类型）、`@RequestParam` 请求参数（拼接为 query 串）、`@PathVariable` 路径参数（替换路径占位符为示例值）。
+3. 左块顶部提供基础地址输入框（默认 `http://localhost:8080`）与「执行」按钮，支持一键执行 HTTP 脚本；脚本基于 IntelliJ HTTP Client 格式，可直接编辑。
+4. 右块展示最近一次请求的响应体（状态码 + 响应头 + 响应体 + 耗时），请求在网络后台线程执行，不阻塞 UI。

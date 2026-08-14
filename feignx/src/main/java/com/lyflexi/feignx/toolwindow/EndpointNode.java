@@ -2,6 +2,7 @@ package com.lyflexi.feignx.toolwindow;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.lyflexi.feignx.entity.HttpMappingInfo;
 
 /**
  * 端点侧边栏树节点数据载体。
@@ -10,6 +11,7 @@ import com.intellij.psi.PsiMethod;
  * 树结构展示与渲染逻辑完全收敛在 toolwindow 包内。
  * <p>
  * 注意:文本/tooltip 均为扫描阶段预计算好的纯字符串,树重建(EDT)阶段不再访问 PSI,避免 read-action 校验失败。
+ * 方法节点额外持有 {@link HttpMappingInfo},用于右侧面板生成 HTTP 脚本模板。
  *
  * @Author: lyflexi
  * @project: feignx-plugin
@@ -36,30 +38,34 @@ public class EndpointNode {
     private final GroupType groupType;
     private final PsiClass psiClass;
     private final PsiMethod psiMethod;
+    private final HttpMappingInfo mappingInfo;
 
-    private EndpointNode(Kind kind, String text, String tooltip, GroupType groupType, PsiClass psiClass, PsiMethod psiMethod) {
+    private EndpointNode(Kind kind, String text, String tooltip, GroupType groupType, PsiClass psiClass,
+                         PsiMethod psiMethod, HttpMappingInfo mappingInfo) {
         this.kind = kind;
         this.text = text;
         this.tooltip = tooltip;
         this.groupType = groupType;
         this.psiClass = psiClass;
         this.psiMethod = psiMethod;
+        this.mappingInfo = mappingInfo;
     }
 
     public static EndpointNode group(String title, GroupType groupType) {
-        return new EndpointNode(Kind.GROUP, title, null, groupType, null, null);
+        return new EndpointNode(Kind.GROUP, title, null, groupType, null, null, null);
     }
 
     public static EndpointNode clazz(PsiClass psiClass, String text, String tooltip, GroupType groupType) {
-        return new EndpointNode(Kind.CLASS, text, tooltip, groupType, psiClass, null);
+        return new EndpointNode(Kind.CLASS, text, tooltip, groupType, psiClass, null, null);
     }
 
-    public static EndpointNode method(PsiMethod psiMethod, String text, String tooltip, GroupType groupType) {
-        return new EndpointNode(Kind.METHOD, text, tooltip, groupType, null, psiMethod);
+    public static EndpointNode method(PsiMethod psiMethod, HttpMappingInfo mappingInfo, String text, String tooltip,
+                                      GroupType groupType) {
+        return new EndpointNode(Kind.METHOD, text, tooltip, groupType, null, psiMethod, mappingInfo);
     }
 
     public static EndpointNode empty(String text) {
-        return new EndpointNode(Kind.EMPTY, text, null, GroupType.SPRING_MVC, null, null);
+        return new EndpointNode(Kind.EMPTY, text, null, GroupType.SPRING_MVC, null, null, null);
     }
 
     public Kind getKind() {
@@ -84,5 +90,9 @@ public class EndpointNode {
 
     public PsiMethod getPsiMethod() {
         return psiMethod;
+    }
+
+    public HttpMappingInfo getMappingInfo() {
+        return mappingInfo;
     }
 }
