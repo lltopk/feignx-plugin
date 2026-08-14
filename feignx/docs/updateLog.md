@@ -96,26 +96,6 @@ Feignx:v4.1.6 resolve IntelliJ IDEA Ultimate 2019.3.51 compatibility problem.
 - Invocation of unresolved method PsiEditorUtil.findEditor(PsiElement)
 - Method SearchControllerAction.navigateToControllerCode(...) contains an invokestatic instruction referencing an unresolved method PsiEditorUtil.findEditor(PsiElement).
 
---- 
-### 🚀 FeignClient Assistant:v4.1.8
-v4.1.8发布——对应分支main-fix-cachev2
-
-reslove issue #10：https://github.com/Halfmoonly/feignx-plugin/issues/10
-
-        1. 我们更名啦，由FeignX更名为FeignClient Assistant
-        2. 极致提升性能，引入CacheManager，管理双边缓存FeignInterface和ApiController
-        3. 欢迎Star：https://github.com/Halfmoonly/feignx-plugin
-
-[feignx-4.1.8.zip](https://github.com/user-attachments/files/19140074/feignx-4.1.8.zip)
-
-
-### 🐞 FeignClient Assistant:v4.1.9
-v4.1.9发布——对应分支main-fix-cachev3
-
-我们优化了双边缓存更新策略（Optimize cache update policies）
-
-https://github.com/user-attachments/files/19148594/OpenFeign.Assistant-4.1.9.zip
-
 
 ### 🚀 FeignClient Assistant V5.1.0 更新内容
 reslove issue #6：https://github.com/Halfmoonly/feignx-plugin/issues/6
@@ -143,31 +123,10 @@ reslove issue #6：https://github.com/Halfmoonly/feignx-plugin/issues/6
 
 1. 我们修复了https://github.com/Halfmoonly/feignx-plugin/issues/11，这曾经是个已经被修复但忘记合并至主分支的修复分支：hotfix/main-fix-bootstrap，见：https://github.com/Halfmoonly/feignx-plugin/issues/8
 
-
-### 🐞 FeignClient Assistant V5.2.0 更新内容
-本次对应修复/缓存优化/多线程优化/API优化的分支：main-fix-cachev4
-
-1. 我们优化了双边缓存的更新机制，同时重构了缓存框架，大大提升了插件性能
-2. 我们优化了用户打注释/***/的时候，由于psiMethod丢失，可能导致的空指针异常
-3. 我们使用了IntelliJ的类快速索引缓存系统PsiShortNamesCache，狠狠加速了原来的手写磁盘递归扫描Class（allJavaFileClass）
-4. 我们使用了Java线程池，加速了初始化过程中，构建出全量接口方法对象HttpMappingInfos的速度（ApiControllers和FeignClients）
-5. 我们使用了IntelliJ的带缓存的注解判断方法psiMethod.hasAnnotation，加速了类型判断（ApiController和FeignClient）
-
-重构的双边缓存架构：
-
-![Bilateral-cache.png](../pics/Bilateral-cache.png)
-
-有匪君子，如切如磋，如琢如磨--2025/03/15 凌晨两点
-
 ### 🚀 FeignClient Assistant V5.2.1 更新内容
 对应分支：feat/main-parallel
 
 默认IO密集型程序核心线程数为`2*N`，并自定义了线程池，优化初始化过程中，构建出全量接口方法对象HttpMappingInfos的速度（ApiControllers和FeignClients）
-
-### 🚀 FeignClient Assistant V5.3.0 更新内容
-对应分支：feat/main-cache
-
-我们额外自定义了项目初始化PsiClass缓存管理器InitialPsiClassCacheManager，将原先的两次全盘allJavaFileClass扫描降低为1次，狠狠加速了原来手写的磁盘递归扫描
 
 ### 🐞 FeignClient Assistant V5.3.1 更新内容
 对应分支：main-fix-dead
