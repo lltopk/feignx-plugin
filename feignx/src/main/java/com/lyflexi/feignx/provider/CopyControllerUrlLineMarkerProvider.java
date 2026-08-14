@@ -103,7 +103,7 @@ public class CopyControllerUrlLineMarkerProvider extends LineMarkerProviderDescr
         LineMarkerInfo<PsiElement> marker = new LineMarkerInfo<>(
                 restfulAnnotation,
                 restfulAnnotation.getTextRange(),
-                RestIcons.STATEMENT_LINE_CLIPBOARD_CONTROLLER_ICON,
+                RestIcons.STATEMENT_LINE_OPEN_API_ICON,
                 psi -> "Click To Copy Controller-URL: " + urlWithParams,
                 handler,
                 GutterIconRenderer.Alignment.RIGHT,

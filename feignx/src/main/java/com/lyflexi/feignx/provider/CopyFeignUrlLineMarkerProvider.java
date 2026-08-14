@@ -103,7 +103,7 @@ public class CopyFeignUrlLineMarkerProvider extends LineMarkerProviderDescriptor
         LineMarkerInfo<PsiElement> marker = new LineMarkerInfo<>(
                 restfulAnnotation,
                 restfulAnnotation.getTextRange(),
-                RestIcons.STATEMENT_LINE_CLIPBOARD_FEIGN_ICON,
+                RestIcons.STATEMENT_LINE_OPEN_API_ICON,
                 psi -> "Click To Copy Feign-URL: " + urlWithParams,
                 handler,
                 GutterIconRenderer.Alignment.RIGHT,

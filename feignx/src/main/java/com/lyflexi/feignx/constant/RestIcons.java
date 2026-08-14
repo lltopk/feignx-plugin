@@ -14,8 +14,7 @@ import javax.swing.*;
 public interface RestIcons {
     Icon STATEMENT_LINE_FEIGN_ICON = IconLoader.getIcon("/icons/jumpAction_feign.svg", RestIcons.class);
     Icon STATEMENT_LINE_CONTROLLER_ICON = IconLoader.getIcon("/icons/jumpAction_controller.svg", RestIcons.class);
-    Icon STATEMENT_LINE_CLIPBOARD_FEIGN_ICON = IconLoader.getIcon("/icons/clipBoard_feign.svg", RestIcons.class);
-    Icon STATEMENT_LINE_CLIPBOARD_CONTROLLER_ICON = IconLoader.getIcon("/icons/clipBoard_controller.svg", RestIcons.class);
+    Icon STATEMENT_LINE_OPEN_API_ICON = IconLoader.getIcon("/icons/openApi.svg", RestIcons.class);
 
     // 插件图标(16x16)。
     // 注意:不使用 /META-INF/pluginIcon.svg(插件类加载器下该路径图标加载异常会显示默认占位图标),

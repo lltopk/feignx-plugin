@@ -87,7 +87,7 @@
         <!-- 右侧"feignx assistant endpoints"端点侧边栏(独立功能,展示工程内全部 SpringMVC/Feign 端点) -->
         <toolWindow id="FeignClient Assistant Endpoints"
                     anchor="right"
-                    icon="/icons/jumpAction_controller.svg"
+                    icon="/icons/openApi.svg"
                     factoryClass="com.lyflexi.feignx.toolwindow.EndpointsToolWindowFactory"/>
 
     </extensions>

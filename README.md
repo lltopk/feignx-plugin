@@ -1,8 +1,7 @@
 <div align="center">
   <img src="./feignx/src/main/resources/icons/jumpAction_feign.svg" height="64">
-  <img src="./feignx/src/main/resources/icons/clipBoard_feign.svg" height="64">
   <img src="./feignx/src/main/resources/icons/jumpAction_controller.svg" height="64">
-  <img src="./feignx/src/main/resources/icons/clipBoard_controller.svg" height="64">
+  <img src="./feignx/src/main/resources/icons/openApi.svg" height="64">
   <h2>FeignClient Assistant</h2>
 </div>
 
