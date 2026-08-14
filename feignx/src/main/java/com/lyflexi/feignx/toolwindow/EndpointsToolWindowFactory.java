@@ -9,9 +9,9 @@ import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * "feignx assistant endpoints" 右侧侧边栏工厂(独立功能,不与历史 gutter/状态栏代码耦合)。
+ * "feignx assistant endpoints" 左下方侧边栏工厂(独立功能,不与历史 gutter/状态栏代码耦合)。
  * <p>
- * 通过 plugin.xml 的 toolWindow 扩展点注册,锚定在右侧,图标复用 icons/jumpAction_controller.svg。
+ * 通过 plugin.xml 的 toolWindow 扩展点注册,锚定在左下方(anchor=bottom,secondary=true),图标复用 icons/jumpAction_controller.svg。
  *
  * @Author: lyflexi
  * @project: feignx-plugin
