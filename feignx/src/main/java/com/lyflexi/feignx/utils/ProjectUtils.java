@@ -108,10 +108,12 @@ public class ProjectUtils {
         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
         Set<PsiClass> result = new LinkedHashSet<>();
         for (String annotationQualifiedName : annotationQualifiedNames) {
+            //allScope用来寻找jar包中的原始注解， 原始注解是总依据， 后用于匹配项目中的引用注解
             PsiClass annotationClass = facade.findClass(annotationQualifiedName, allScope);
             if (Objects.isNull(annotationClass)) {
                 continue;
             }
+            //下面不用allScope， 用projectScope即可
             try {
                 collectJavaClassesByAnnotation(annotationClass, project, projectScope, result);
             } catch (ProcessCanceledException | IndexNotReadyException e) {
@@ -126,11 +128,11 @@ public class ProjectUtils {
     }
 
     /**
-     * 基于 Java 注解 stub 索引(JavaAnnotationIndex)收集标注指定注解的 Java 类。
-     * 直接查询 Java 注解索引,绕开 AnnotatedElementsSearch 扩展点——后者会触发 Kotlin 插件的
-     * KotlinAnnotatedElementsSearcher,在 Kotlin Analysis API 未就绪时会抛
-     * "Cannot find service KaGlobalSearchScopeMerger / KotlinProjectStructureProvider" 等异常,
-     * 直接导致整条查询中断、Controller/Feign 之间的 gutter 导航消失。
+     * 主路径:基于 Java 注解 stub 索引(JavaAnnotationIndex)按短名查注解,
+     * 再用 ref.resolve() + areElementsEquivalent 精确匹配目标注解类, 向上取到标注的类。
+     * 用:注解 stub 索引 + PSI 引用解析,索引级 O(标注类) 定位,快。
+     * 避:AnnotatedElementsSearch 扩展点——会触发 Kotlin 插件的 KotlinAnnotatedElementsSearcher,
+     *    Analysis API 未就绪时抛 Cannot find service KaGlobalSearchScopeMerger 等异常,中断整条查询。
      */
     private static void collectJavaClassesByAnnotation(PsiClass annotationClass, Project project,
                                                        GlobalSearchScope scope, Set<PsiClass> result) {
@@ -138,6 +140,10 @@ public class ProjectUtils {
         if (shortName == null) {
             return;
         }
+        //三层关系：
+        // owner: PsiClass (FooController)
+        // PsiModifierList: 当前的annotation.getContext()
+        // annotation: 当前的annotation从 JavaAnnotationIndex 查到
         PsiManager psiManager = PsiManager.getInstance(project);
         Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(shortName, project, scope);
         for (PsiAnnotation annotation : annotations) {
@@ -164,8 +170,12 @@ public class ProjectUtils {
     }
 
     /**
-     * 回退扫描:仅遍历工程内的 Java 源文件,按注解全限定名匹配类(含内部类)。
-     * 不经过 AnnotatedElementsSearch,从而绕开 Kotlin 插件的注解搜索扩展点,避免其服务缺失导致的异常。
+     * 兜底路径:不走任何注解/搜索索引,按文件类型索引(FileTypeIndex)全量枚举工程内所有 .java 文件,
+     * 再逐个用 hasAnnotation(全限定名) 字符串匹配(含内部类)。
+     * 用:FileTypeIndex + 字符串匹配,不触碰注解 stub 索引/PSI 树导航,失败面最小。
+     * 避:两类索引检索——注解 stub 索引(JavaAnnotationIndex)与 *Search 扩展点(AnnotatedElementsSearch,会触发 KotlinAnnotatedElementsSearcher);
+     *
+     * 仅在其抛 RuntimeException|LinkageError 时兜底(O(全部文件),慢)。
      */
     private static List<PsiClass> searchJavaClassesByAnnotation(PsiClass annotationClass, GlobalSearchScope scope) {
         List<PsiClass> result = new ArrayList<>();
@@ -196,150 +206,6 @@ public class ProjectUtils {
             collectAnnotatedClasses(psiClass.getInnerClasses(), annotationQualifiedName, result);
         }
     }
-
-
-    /**
-     * 扫描所有controller类,使用 IntelliJ 的 类快速索引缓存系统PsiShortNamesCache
-     * 方式	                            推荐场景	                                                           性能
-     * 手写全类递归	                    小项目或通用工具	                                                   ❌慢(最笨的)
-     * AnnotatedElementsSearch         专注指定注解类比如Controller和RestController	                           🚀快(基于直接查询所有类并检查注解的方式。如果项目非常大，这可能会比较耗时)
-     * PsiShortNamesCache	          ✅最推荐，快速按类名索引	                                               🚀🚀快
-     * 多模块并发	                        大型项目	                                                           🚀🚀🚀
-     *
-     * @param project
-     * @param scope
-     * @return 注意需要自己再判断目标psiClass类型：是否是Controller类
-     *
-     * TODO 但是目前返回为空？原因未知
-     */
-    @Deprecated
-    public static List<PsiClass> scanAllControllerClassesByPsiShortNamesCache(Project project, GlobalSearchScope scope) {
-        List<PsiClass> controllerClasses = new ArrayList<>();
-        PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(project);
-        DumbService.getInstance(project).runReadActionInSmartMode(() -> {
-            //这里总是会报异常，      catch (ProcessCanceledException | IndexNotReadyException e) {
-            //        throw e;
-            //      }
-            // 触发场景：项目刚启动、索引还没完成，或索引被重建时调用 PSI 索引相关 API（比如 getAllClassNames()）就会抛这个。
-            //解决方案，包装到runReadActionInSmartMode模式内使用
-            String[] allClassNames = shortNamesCache.getAllClassNames();
-            for (String className : allClassNames) {
-                PsiClass[] classes = shortNamesCache.getClassesByName(className, scope);
-                for (PsiClass psiClass : classes) {
-                    if (AnnotationParserUtils.isControllerClass(psiClass)) {
-                        controllerClasses.add(psiClass);
-                    }
-                }
-            }
-        });
-        return controllerClasses;
-    }
-
-    /**
-     * 扫描所有feign类,使用 IntelliJ 的 类快速索引缓存系统PsiShortNamesCache
-     * 方式	                            推荐场景	                         性能
-     * 手写全类递归	                    小项目或通用工具	                  ❌慢（最笨的）
-     * AnnotatedElementsSearch         专注注解类,比如FeignClient	          🚀快(基于直接查询所有类并检查注解的方式。如果项目非常大，这可能会比较耗时)
-     * PsiShortNamesCache	          ✅最推荐，快速按类名索引	              🚀🚀快
-     * 多模块并发	                        大型项目	                          🚀🚀🚀
-     *
-     * @param project
-     * @param scope
-     * @return 注意需要自己再判断目标psiClass类型：是否是Feign类
-     *
-     * TODO 但是目前返回为空？原因未知
-     */
-    @Deprecated
-    public static List<PsiClass> scanAllFeignClassesByPsiShortNamesCache(Project project, GlobalSearchScope scope) {
-        List<PsiClass> feignClass = new ArrayList<>();
-        PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(project);
-        DumbService.getInstance(project).runReadActionInSmartMode(() -> {
-            //这里总是会报异常，      catch (ProcessCanceledException | IndexNotReadyException e) {
-            //        throw e;
-            //      }
-            // 触发场景：项目刚启动、索引还没完成，或索引被重建时调用 PSI 索引相关 API（比如 getAllClassNames()）就会抛这个。
-            //解决方案，包装到runReadActionInSmartMode模式内使用
-            String[] allClassNames = shortNamesCache.getAllClassNames();
-
-            for (String className : allClassNames) {
-                PsiClass[] classes = shortNamesCache.getClassesByName(className, scope);
-                for (PsiClass psiClass : classes) {
-                    if (AnnotationParserUtils.isFeignInterface(psiClass)) {
-                        feignClass.add(psiClass);
-                    }
-                }
-            }
-        });
-        return feignClass;
-    }
-
-
-    /**
-     * 使用 AnnotatedElementsSearch 精确扫描所有 Controller 类（包含 @Controller 和 @RestController）
-     *
-     * @param project
-     * @param scope
-     * @return
-     *
-     * TODO 但是目前返回为空？原因未知
-     */
-    @Deprecated
-    public static List<PsiClass> scanAllControllerClassesByAnnotationSearch(Project project, GlobalSearchScope scope) {
-        List<PsiClass> controllerClasses = new ArrayList<>();
-        if (DumbService.isDumb(project)) {
-            return Collections.emptyList(); // 索引未完成，跳过
-        }
-
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-
-        PsiClass controllerAnnotation = facade.findClass(SpringBootClassAnnotation.CONTROLLER.getQualifiedName(), scope);
-        PsiClass restControllerAnnotation = facade.findClass(SpringBootClassAnnotation.RESTCONTROLLER.getQualifiedName(), scope);
-
-        if (Objects.nonNull(controllerAnnotation)) {
-            Collection<PsiClass> classes = AnnotatedElementsSearch.searchPsiClasses(controllerAnnotation, scope).findAll();
-            controllerClasses.addAll(classes);
-        }
-
-        if (Objects.nonNull(restControllerAnnotation)) {
-            Collection<PsiClass> classes = AnnotatedElementsSearch.searchPsiClasses(restControllerAnnotation, scope).findAll();
-            controllerClasses.addAll(classes);
-        }
-
-        // 可选：去重（如果某个类同时标注了两个注解）
-        controllerClasses = controllerClasses.stream()
-                .distinct()
-                .collect(Collectors.toList());
-
-        return controllerClasses;
-    }
-
-    /**
-     * 使用 AnnotatedElementsSearch 精确扫描所有 Feign 类（包含 @FeignClient）
-     * @param project
-     * @param scope
-     * @return
-     *
-     * TODO 但是目前返回为空？原因未知
-     */
-    @Deprecated
-    public static List<PsiClass> scanAllFeignClassesByAnnotationSearch(Project project, GlobalSearchScope scope) {
-        List<PsiClass> feignClasss = new ArrayList<>();
-        if (DumbService.isDumb(project)) {
-            return Collections.emptyList(); // 索引未完成，跳过
-        }
-
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-
-        PsiClass controllerAnnotation = facade.findClass(SpringCloudClassAnnotation.FEIGNCLIENT.getQualifiedName(), scope);
-
-        if (Objects.nonNull(controllerAnnotation)) {
-            Collection<PsiClass> classes = AnnotatedElementsSearch.searchPsiClasses(controllerAnnotation, scope).findAll();
-            feignClasss.addAll(classes);
-        }
-
-        return feignClasss;
-    }
-
 
     /**
      * @description: 检查元素（PsiMethod或者PsiClass）是纯粹的业务文件，而非三方源码，用于过滤所有的Provider监听
