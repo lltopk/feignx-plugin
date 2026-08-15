@@ -1,12 +1,15 @@
-package com.lyflexi.feignx.utils;
+package com.lyflexi.feignx.resolver;
 
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.lyflexi.feignx.core.PsiCoreEngine;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
 import com.lyflexi.feignx.enums.SpringCloudClassAnnotation;
 import java.util.*;
 
+import com.lyflexi.feignx.utils.AnnotationParserUtils;
+import com.lyflexi.feignx.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * @Version: 1.0.0
  * @Description: feign类扫描工具类
  */
-public class FeignClassScanUtils {
+public class FeignMappingResolver {
     /**
      * 当前controller，扫描待跳转的所有目标Feign
      *
@@ -28,7 +31,7 @@ public class FeignClassScanUtils {
         // 获取当前项目
         Project project = controllerMethod.getProject();
         // 直接基于当前controller方法计算其HttpMappingInfo，不再依赖双边缓存
-        HttpMappingInfo controllerInfo = ControllerClassScanUtils.controllerOfPsiMethod(controllerMethod.getContainingClass(), project, controllerMethod);
+        HttpMappingInfo controllerInfo = ControllerMappingResolver.controllerOfPsiMethod(controllerMethod.getContainingClass(), project, controllerMethod);
         if (Objects.isNull(controllerInfo)) {
             return elementList;
         }
@@ -72,7 +75,7 @@ public class FeignClassScanUtils {
 
         Map<String, List<HttpMappingInfo>> index = new HashMap<>();
         // 基于 IntelliJ 注解索引精确扫描 @FeignClient 接口
-        List<PsiClass> feignClasses = ProjectUtils.scanAllFeignClasses(project);
+        List<PsiClass> feignClasses = scanAllFeignClasses(project);
         for (PsiClass psiClass : feignClasses) {
             // 校验 psiClass 的有效性
             if (null == psiClass || !psiClass.isValid()) {
@@ -89,6 +92,10 @@ public class FeignClassScanUtils {
             }
         }
         return index;
+    }
+
+    private static List<PsiClass> scanAllFeignClasses(Project project) {
+        return PsiCoreEngine.searchClassesByAnnotation(project, SpringCloudClassAnnotation.FEIGNCLIENT.getQualifiedName());
     }
 
     /**

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-FeignClient Assistant (ID `com.lyflexi.feignx`, package `com.lyflexi.feignx`) — an IntelliJ IDEA plugin that draws gutters to navigate between Spring Cloud `@FeignClient` interfaces and `@RestController`/`@Controller` classes, plus URL-to-clipboard copy. Formerly named FeignX. All code/comments/changelog are mostly Chinese.
+FeignClient Assistant (ID `com.lyflexi.feignx`, package `com.lyflexi.feignx`) — an IntelliJ IDEA plugin that draws gutters to navigate between Spring Cloud `@FeignClient` interfaces and `@RestController`/`@Controller` classes, plus an Endpoints tool window listing all SpringBoot/MVC/Feign endpoints with HTTP request scripting. Formerly named FeignX. All code/comments/changelog are mostly Chinese.
 
 ## Build
 
@@ -14,23 +14,24 @@ FeignClient Assistant (ID `com.lyflexi.feignx`, package `com.lyflexi.feignx`) �
 
 ## Versioning (easy to miss)
 
-- Version `5.6.4.4` is duplicated and must match in both `feignx/build.gradle.kts` (`version =`) and `feignx/src/main/resources/META-INF/plugin.xml` (`<version>`). Bump both and add a `feignx/docs/updateLog.md` entry.
+- Version `5.7.2` is duplicated and must match in both `feignx/build.gradle.kts` (`version =`) and `feignx/src/main/resources/META-INF/plugin.xml` (`<version>`). Bump both and add a `feignx/docs/updateLog.md` entry.
 - `publishPlugin`/`signPlugin` read env vars only: `PUBLISH_TOKEN`, `CERTIFICATE_CHAIN`, `PRIVATE_KEY`, `PRIVATE_KEY_PASSWORD`.
 
 ## Architecture
 
-- Entry points are registered in `feignx/src/main/resources/META-INF/plugin.xml`: four `LineMarkerProvider`s (`F2C`, `C2F`, `CopyControllerUrl`, `CopyFeignUrl`), two tab `IconProvider`s, and the settings page `UserPluginConfigurableUI`. There are no listeners and no legacy components anymore.
+- Entry points are registered in `feignx/src/main/resources/META-INF/plugin.xml`: three `LineMarkerProvider`s (`F2C`, `C2F`, `NavigateToEndpoints`), two tab `IconProvider`s (`FeignClassIconProvider`/`RestControllerIconProvider`), the settings page `UserPluginConfigurableUI`, a `StatusBarWidgetFactory`, and the Endpoints `toolWindow`. There are no listeners and no legacy components anymore.
+- Package layout: `core/` (scanning engine `PsiCoreEngine`, deprecated multi-project helper `PsiCoreEngineMultiProject`, refresh orchestrator `ProjectRefreshManager`), `resolver/` (controller/feign path resolvers), `utils/` (helpers incl. `BizChecker`).
 - Everything is computed on demand from PSI, relying on IntelliJ's own PSI index/caching:
-  - `ControllerClassScanUtils.scanControllerPaths`/`FeignClassScanUtils.scanFeignInterfaces` scan every time a gutter is collected, but via the annotation index (`AnnotatedElementsSearch` in `ProjectUtils.scanAllControllerClasses`/`scanAllFeignClasses`, project-scope only) instead of walking all packages. No cross-invocation state; each scan call builds a local `path → HttpMappingInfo` index (`FeignClassScanUtils.scanFeignIndex`) and caches per-module Spring config parsing (`server.servlet.context-path`/`spring.mvc.servlet.path`) in a local map keyed by module root.
-  - The current method's own `HttpMappingInfo` is computed directly via `FeignClassScanUtils.feignOfPsiMethod(...)` (feign side) and `ControllerClassScanUtils.controllerOfPsiMethod(...)` (controller side); matching is pure path comparison.
-- The `scanAll*By*` methods in `ProjectUtils` are `@Deprecated` and return empty — don't use or "fix" them.
+  - `resolver/ControllerMappingResolver.scanControllerPaths` / `resolver/FeignMappingResolver.scanFeignInterfaces` scan every time a gutter is collected, via `core/PsiCoreEngine.searchClassesByAnnotation` (project-scope only) instead of walking all packages. `PsiCoreEngine` queries the Java annotation stub index (`JavaAnnotationIndex`, keyed by short name) then matches precisely with `ref.resolve()` + `areElementsEquivalent`, and falls back to a full `.java` file walk (`FileTypeIndex` + `hasAnnotation(全限定名)`) on `RuntimeException|LinkageError`. It never uses `AnnotatedElementsSearch` — that extension point triggers the Kotlin plugin's `KotlinAnnotatedElementsSearcher`, which throws `Cannot find service KaGlobalSearchScopeMerger` when the Analysis API is not ready. No cross-invocation state; each scan call builds a local `path → HttpMappingInfo` index (`FeignMappingResolver.scanFeignIndex`, private) and caches per-module Spring config parsing (`server.servlet.context-path`/`spring.mvc.servlet.path`) in a local map keyed by module root.
+  - The current method's own `HttpMappingInfo` is computed directly via `FeignMappingResolver.feignOfPsiMethod(...)` (feign side) and `ControllerMappingResolver.controllerOfPsiMethod(...)` (controller side); matching is pure path comparison.
+- The legacy multi-project helpers (`PsiCoreEngineMultiProject.getOpenProjects`/`scanProjectCls`) are `@Deprecated` and unused — don't resurrect them.
 - Annotation matching: `AnnotationParserUtils` + `SpringCloudClassAnnotation`/`SpringBootClassAnnotation`/`SpringBootMethodAnnotation` enums. Prefer `PsiMethod.hasAnnotation(...)` over manual string checks.
 - URL prefixes (`server.servlet.context-path`, `spring.mvc.servlet.path`) are parsed from `application|bootstrap.{properties,yml,yaml}` **plus profile-specific files** (`application-{profile}.yml/yaml/properties`, active profile resolved from `spring.profiles.active`, with a fallback scan of `application-*.yml` when the value is a Maven placeholder) by `properties/ConfigReader` + `ServerParser` (snakeyaml 1.29 is bundled for this — keep it).
 
 ## Gotchas (all learned from past bug fixes in the changelog)
 
-- Every provider must guard with `ProjectUtils.isBizElement(element)` (excludes jar/library PSI) and `DumbService.isDumb(project)` before touching PSI, and access PSI only inside read actions / EDT. Skipping these caused `PsiInvalidElementAccessException`, `IndexNotReadyException`, and freezes.
+- Every provider must guard with `BizChecker.isBizElement(element)` (excludes jar/library PSI) and `DumbService.isDumb(project)` before touching PSI, and access PSI only inside read actions / EDT. Skipping these caused `PsiInvalidElementAccessException`, `IndexNotReadyException`, and freezes.
 - Gutter icons are intentionally anchored to the Restful annotation element, not the method name (keeps gutters stable during Enter/comment edits) — see comment in `F2CLineMarkerProvider`.
-- Editing comments (`/** */`) temporarily strips annotations; `HttpMappingInfo.of` then returns null, so `feignOfPsiMethod`/`controllerOfPsiMethod` can return null — matching/copy callers must tolerate it.
+- Editing comments (`/** */`) temporarily strips annotations; `HttpMappingInfo.of` then returns null, so `feignOfPsiMethod`/`controllerOfPsiMethod` can return null — matching/gutter callers must tolerate it.
 - Do not introduce newer IntelliJ Platform APIs; binary incompatibility with old IDE versions shipped before (v4.1.6 `NoSuchMethodError`). Compile against the 2021.2 SDK.
 - Keep the repo's branch/commit style: branch names like `feat/main-*`, `hotfix/main-*`; changelog entries in Chinese.

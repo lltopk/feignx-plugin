@@ -1,4 +1,4 @@
-package com.lyflexi.feignx.refresh;
+package com.lyflexi.feignx.core;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.notification.NotificationGroupManager;
@@ -10,8 +10,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
-import com.lyflexi.feignx.utils.ControllerClassScanUtils;
-import com.lyflexi.feignx.utils.FeignClassScanUtils;
+import com.lyflexi.feignx.resolver.ControllerMappingResolver;
+import com.lyflexi.feignx.resolver.FeignMappingResolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,11 +24,11 @@ import java.util.Objects;
  * 任意调用方仅需调用 {@link #refreshAll(Project)} 即可触发一次全量刷新,
  * 与 StatusBar 展示层完全解耦,便于后续扩展新的入口。
  */
-public final class FeignRefreshManager {
+public final class ProjectRefreshManager {
 
     private static final String NOTIFICATION_GROUP = "FeignClient Assistant With RequestX";
 
-    private FeignRefreshManager() {
+    private ProjectRefreshManager() {
     }
 
     /**
@@ -83,8 +83,8 @@ public final class FeignRefreshManager {
      * 执行全量扫描并统计,必须在读锁(ReadAction)内调用
      */
     private static RefreshResult doScan(Project project) {
-        List<HttpMappingInfo> controllers = ControllerClassScanUtils.scanControllerPaths(project);
-        List<HttpMappingInfo> feigns = FeignClassScanUtils.scanFeignInterfaces(project);
+        List<HttpMappingInfo> controllers = ControllerMappingResolver.scanControllerPaths(project);
+        List<HttpMappingInfo> feigns = FeignMappingResolver.scanFeignInterfaces(project);
         RefreshResult result = new RefreshResult();
         result.controllerMethodCount = controllers.size();
         result.controllerClassCount = countClasses(controllers);

@@ -14,12 +14,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.lyflexi.feignx.constant.RestIcons;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
+import com.lyflexi.feignx.resolver.ControllerMappingResolver;
+import com.lyflexi.feignx.resolver.FeignMappingResolver;
 import com.lyflexi.feignx.toolwindow.EndpointsPanel;
-import com.lyflexi.feignx.utils.AnnotationParserUtils;
-import com.lyflexi.feignx.utils.ControllerClassScanUtils;
-import com.lyflexi.feignx.utils.FeignClassScanUtils;
-import com.lyflexi.feignx.utils.ProjectUtils;
-import com.lyflexi.feignx.utils.StringUtil;
+import com.lyflexi.feignx.utils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +44,7 @@ public class NavigateToEndpointsLineMarkerProvider extends LineMarkerProviderDes
         if (null == element) {
             return null;
         }
-        if (!ProjectUtils.isBizElement(element)) {
+        if (!BizChecker.isBizElement(element)) {
             return null;
         }
         Project project = element.getProject();
@@ -77,9 +75,9 @@ public class NavigateToEndpointsLineMarkerProvider extends LineMarkerProviderDes
         // 计算该方法的完整请求路径(与 EndpointsPanel 树节点 HttpMappingInfo.path 一致)
         HttpMappingInfo mappingInfo;
         if (isController) {
-            mappingInfo = ControllerClassScanUtils.controllerOfPsiMethod(method.getContainingClass(), project, method);
+            mappingInfo = ControllerMappingResolver.controllerOfPsiMethod(method.getContainingClass(), project, method);
         } else {
-            mappingInfo = FeignClassScanUtils.feignOfPsiMethod(method.getContainingClass(), method);
+            mappingInfo = FeignMappingResolver.feignOfPsiMethod(method.getContainingClass(), method);
         }
         if (Objects.isNull(mappingInfo)) {
             return null;

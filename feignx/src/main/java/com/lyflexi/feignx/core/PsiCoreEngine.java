@@ -1,4 +1,4 @@
-package com.lyflexi.feignx.utils;
+package com.lyflexi.feignx.core;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -12,13 +12,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.lyflexi.feignx.enums.SpringCloudClassAnnotation;
 import com.lyflexi.feignx.enums.SpringBootClassAnnotation;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @Author: hmly
@@ -27,73 +24,7 @@ import java.util.stream.Collectors;
  * @Version: 1.0.0
  * @Description:
  */
-public class ProjectUtils {
-    /**
-     * 获取所有打开的项目列表
-     *
-     * @return {@link Project[]}
-     */
-    public static Project[] getOpenProjects() {
-        // 获取ProjectManager实例
-        ProjectManager projectManager = ProjectManager.getInstance();
-        // 获取所有打开的项目列表
-        return projectManager.getOpenProjects();
-    }
-
-    /**
-     * 获取工程中所有的class
-     *
-     * @param rootPackage
-     * @param project
-     * @return
-     */
-    public static List<PsiClass> scanProjectCls(PsiPackage rootPackage, Project project) {
-        List<PsiClass> javaFiles = new ArrayList<>();
-        //只扫描项目中的业务文件，不包含资源文件、配置文件、静态文件等
-        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
-        processPackage(rootPackage, projectScope, javaFiles);
-        return javaFiles;
-    }
-
-    /**
-     * 递归方法processPackage
-     *
-     * @param psiPackage
-     * @param searchScope
-     * @param classesToCheck
-     */
-    private static void processPackage(PsiPackage psiPackage, GlobalSearchScope searchScope, List<PsiClass> classesToCheck) {
-        for (PsiClass psiClass : psiPackage.getClasses()) {
-            classesToCheck.add(psiClass);
-        }
-
-        for (PsiPackage subPackage : psiPackage.getSubPackages(searchScope)) {
-            processPackage(subPackage, searchScope, classesToCheck);
-        }
-    }
-
-    /**
-     * 基于 IntelliJ 注解索引(AnnotatedElementsSearch)精确扫描所有 Controller 类(@Controller/@RestController)
-     * 相比全包递归,只命中索引中标注了目标注解的类,复杂度从 O(全项目类) 降为 O(标注类)
-     *
-     * @param project
-     * @return
-     */
-    public static List<PsiClass> scanAllControllerClasses(Project project) {
-        return searchClassesByAnnotation(project,
-                SpringBootClassAnnotation.CONTROLLER.getQualifiedName(),
-                SpringBootClassAnnotation.RESTCONTROLLER.getQualifiedName());
-    }
-
-    /**
-     * 基于 IntelliJ 注解索引(AnnotatedElementsSearch)精确扫描所有 Feign 接口(@FeignClient)
-     *
-     * @param project
-     * @return
-     */
-    public static List<PsiClass> scanAllFeignClasses(Project project) {
-        return searchClassesByAnnotation(project, SpringCloudClassAnnotation.FEIGNCLIENT.getQualifiedName());
-    }
+public class PsiCoreEngine {
 
     /**
      * 注解索引扫描通用实现
@@ -113,6 +44,7 @@ public class ProjectUtils {
             if (Objects.isNull(annotationClass)) {
                 continue;
             }
+            int before = result.size();
             //下面不用allScope， 用projectScope即可
             try {
                 collectJavaClassesByAnnotation(annotationClass, project, projectScope, result);
@@ -206,49 +138,4 @@ public class ProjectUtils {
             collectAnnotatedClasses(psiClass.getInnerClasses(), annotationQualifiedName, result);
         }
     }
-
-    /**
-     * @description: 检查元素（PsiMethod或者PsiClass）是纯粹的业务文件，而非三方源码，用于过滤所有的Provider监听
-     * @author: hmly
-     * @date: 2025/5/18 13:50
-     * @param: [element]
-     * @return: java.lang.Boolean
-     **/
-
-    public static Boolean isBizElement(PsiElement element) {
-        if (element == null) {
-            return false;
-        }
-
-        // 检查文件类型
-        if (element.getContainingFile() == null) {
-            return false;
-        }
-
-        //element所属的文件
-        VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
-        if (virtualFile == null) {
-            return false;
-        }
-
-        // 首先检查是否是Java文件。
-        String fileName = virtualFile.getName();
-        if (!fileName.endsWith(".java")) {
-            return false;
-        }
-
-        // 然后排除三方包中的文件
-        Project project = element.getProject();
-
-        ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
-
-        if (projectFileIndex.isInLibrary(virtualFile)) {
-            return false;
-        }
-
-        return projectFileIndex.isInSourceContent(virtualFile);
-    }
-
-
-
 }

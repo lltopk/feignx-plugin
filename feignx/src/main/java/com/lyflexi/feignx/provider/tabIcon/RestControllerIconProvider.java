@@ -6,7 +6,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.lyflexi.feignx.user.UserRestControllerSettings;
 import com.lyflexi.feignx.utils.AnnotationParserUtils;
-import com.lyflexi.feignx.utils.ProjectUtils;
+import com.lyflexi.feignx.core.PsiCoreEngine;
+import com.lyflexi.feignx.utils.BizChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public class RestControllerIconProvider extends IconProvider {
             return null;
         }
         //排除三方依赖扫描
-        if (!ProjectUtils.isBizElement(element)){
+        if (!BizChecker.isBizElement(element)){
             return null;
         }
         if (!(element instanceof PsiClass)) {

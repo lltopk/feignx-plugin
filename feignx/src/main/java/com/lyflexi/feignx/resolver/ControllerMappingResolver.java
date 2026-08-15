@@ -1,11 +1,14 @@
-package com.lyflexi.feignx.utils;
+package com.lyflexi.feignx.resolver;
 
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.lyflexi.feignx.core.PsiCoreEngine;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
+import com.lyflexi.feignx.enums.SpringBootClassAnnotation;
 import com.lyflexi.feignx.properties.ConfigReader;
 import com.lyflexi.feignx.properties.ServerParser;
+import com.lyflexi.feignx.utils.AnnotationParserUtils;
 
 import javax.swing.*;
 import java.io.File;
@@ -21,13 +24,13 @@ import static com.lyflexi.feignx.enums.SpringBootMethodAnnotation.REQUEST_MAPPIN
  * @project: feignx-plugin
  * @Date: 2024/10/18 14:50
  */
-public class ControllerClassScanUtils {
+public class ControllerMappingResolver {
 
 
     private static final String SPRINGBOOT_SERVER_PATH = "server.servlet.context-path";
     private static final String SPRINGMVC_PATH = "spring.mvc.servlet.path";
 
-    private ControllerClassScanUtils() {
+    private ControllerMappingResolver() {
     }
 
     /**
@@ -44,7 +47,7 @@ public class ControllerClassScanUtils {
 
         List<HttpMappingInfo> httpMappingInfos = new ArrayList<>();
         // 基于 IntelliJ 注解索引精确扫描 Controller 类，不再全包递归
-        List<PsiClass> controllerClasses = ProjectUtils.scanAllControllerClasses(project);
+        List<PsiClass> controllerClasses = scanAllControllerClasses(project);
 
         // 单次扫描内按模块缓存 server.servlet.context-path / spring.mvc.servlet.path 的解析结果，
         // 避免每个 controller 重复递归查找 resources 目录并解析配置文件（不跨调用持留）
@@ -68,6 +71,12 @@ public class ControllerClassScanUtils {
         }
 
         return httpMappingInfos;
+    }
+
+    private static List<PsiClass> scanAllControllerClasses(Project project) {
+        return PsiCoreEngine.searchClassesByAnnotation(project,
+                SpringBootClassAnnotation.CONTROLLER.getQualifiedName(),
+                SpringBootClassAnnotation.RESTCONTROLLER.getQualifiedName());
     }
 
     /**
@@ -217,7 +226,7 @@ public class ControllerClassScanUtils {
         Project project = psiMethod.getProject();
 
         // 直接基于当前feign方法计算其HttpMappingInfo，不再依赖双边缓存
-        HttpMappingInfo feignInfo = FeignClassScanUtils.feignOfPsiMethod(psiMethod.getContainingClass(), psiMethod);
+        HttpMappingInfo feignInfo = FeignMappingResolver.feignOfPsiMethod(psiMethod.getContainingClass(), psiMethod);
         if (Objects.isNull(feignInfo)) {
             return elementList;
         }

@@ -12,9 +12,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.lyflexi.feignx.constant.RestIcons;
 import com.lyflexi.feignx.utils.AnnotationParserUtils;
+import com.lyflexi.feignx.utils.BizChecker;
 import com.lyflexi.feignx.utils.CollectionUtil;
-import com.lyflexi.feignx.utils.ControllerClassScanUtils;
-import com.lyflexi.feignx.utils.ProjectUtils;
+import com.lyflexi.feignx.resolver.ControllerMappingResolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -39,7 +39,7 @@ public class F2CLineMarkerProvider extends RelatedItemLineMarkerProvider {
             return;
         }
         //排除三方依赖扫描
-        if (!ProjectUtils.isBizElement(element)){
+        if (!BizChecker.isBizElement(element)){
             return;
         }
         Project project = element.getProject();
@@ -67,7 +67,7 @@ public class F2CLineMarkerProvider extends RelatedItemLineMarkerProvider {
         }
 
         //计算匹配到的目标Controller集合
-        List<PsiElement> resultList = ControllerClassScanUtils.process(method);
+        List<PsiElement> resultList = ControllerMappingResolver.process(method);
         if (CollectionUtil.isNotEmpty(resultList)) {
             NavigationGutterIconBuilder<PsiElement> builder = NavigationGutterIconBuilder
                     .create(RestIcons.STATEMENT_LINE_FEIGN_ICON)

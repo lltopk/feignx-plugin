@@ -6,7 +6,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
 import com.lyflexi.feignx.utils.AnnotationParserUtils;
-import com.lyflexi.feignx.utils.ControllerClassScanUtils;
+import com.lyflexi.feignx.resolver.ControllerMappingResolver;
 import com.lyflexi.feignx.utils.StringUtil;
 
 import java.util.ArrayList;
@@ -134,7 +134,7 @@ public final class HttpScriptGenerator {
             return DEFAULT_PORT;
         }
         Project project = method.getProject();
-        String port = ControllerClassScanUtils.extractSpringProperties(psiClass, project, SERVER_PORT_KEY);
+        String port = ControllerMappingResolver.extractSpringProperties(psiClass, project, SERVER_PORT_KEY);
         if (StringUtil.isNotBlank(port)) {
             String trimmed = port.trim();
             try {

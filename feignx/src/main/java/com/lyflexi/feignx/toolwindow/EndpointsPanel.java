@@ -22,9 +22,9 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.lyflexi.feignx.constant.RestIcons;
 import com.lyflexi.feignx.entity.HttpMappingInfo;
-import com.lyflexi.feignx.utils.ControllerClassScanUtils;
-import com.lyflexi.feignx.utils.FeignClassScanUtils;
-import com.lyflexi.feignx.utils.ProjectUtils;
+import com.lyflexi.feignx.resolver.ControllerMappingResolver;
+import com.lyflexi.feignx.resolver.FeignMappingResolver;
+import com.lyflexi.feignx.core.PsiCoreEngine;
 import com.lyflexi.feignx.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -325,8 +325,8 @@ public class EndpointsPanel extends JPanel {
      * 后台线程(ReadAction 内)执行全量扫描,并预计算树展示所需的全部纯字符串。
      */
     private static EndpointSnapshot buildSnapshot(Project project) {
-        List<EndpointClassData> controllers = groupEndpoints(ControllerClassScanUtils.scanControllerPaths(project));
-        List<EndpointClassData> feigns = groupEndpoints(FeignClassScanUtils.scanFeignInterfaces(project));
+        List<EndpointClassData> controllers = groupEndpoints(ControllerMappingResolver.scanControllerPaths(project));
+        List<EndpointClassData> feigns = groupEndpoints(FeignMappingResolver.scanFeignInterfaces(project));
         List<EndpointClassData> springBoots = groupSpringBootClasses(project);
         return new EndpointSnapshot(controllers, feigns, springBoots,
                 countMethods(controllers), countMethods(feigns));
@@ -387,10 +387,10 @@ public class EndpointsPanel extends JPanel {
 
     /**
      * 扫描标注 @SpringBootApplication 的启动类(仅工程源码范围)。
-     * 复用 ProjectUtils 的注解扫描(内部已兜底处理 Kotlin 插件 Analysis API 未就绪导致的异常)。
+     * 复用 PsiCoreEngine 的注解扫描(内部已兜底处理 Kotlin 插件 Analysis API 未就绪导致的异常)。
      */
     private static List<PsiClass> scanSpringBootClasses(Project project) {
-        return ProjectUtils.searchClassesByAnnotation(project, SPRING_BOOT_APPLICATION);
+        return PsiCoreEngine.searchClassesByAnnotation(project, SPRING_BOOT_APPLICATION);
     }
 
     private static int countMethods(List<EndpointClassData> classes) {

@@ -5,7 +5,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.Consumer;
 import com.lyflexi.feignx.constant.RestIcons;
-import com.lyflexi.feignx.refresh.FeignRefreshManager;
+import com.lyflexi.feignx.core.ProjectRefreshManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +15,7 @@ import java.awt.event.MouseEvent;
 /**
  * 右下角 StatusBar 图标:点击手动刷新所有 Feign/Controller 映射(Issue #25 兜底功能)
  * <p>
- * 仅承载 UI 图标与点击事件转发,刷新逻辑见 {@link FeignRefreshManager},
+ * 仅承载 UI 图标与点击事件转发,刷新逻辑见 {@link ProjectRefreshManager},
  * 与扫描/匹配逻辑完全解耦。
  */
 public class FeignRefreshStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation, StatusBarWidget.Multiframe {
@@ -57,7 +57,7 @@ public class FeignRefreshStatusBarWidget implements StatusBarWidget, StatusBarWi
 
     @Override
     public @Nullable Consumer<MouseEvent> getClickConsumer() {
-        return mouseEvent -> FeignRefreshManager.refreshAll(project);
+        return mouseEvent -> ProjectRefreshManager.refreshAll(project);
     }
 
     @Override

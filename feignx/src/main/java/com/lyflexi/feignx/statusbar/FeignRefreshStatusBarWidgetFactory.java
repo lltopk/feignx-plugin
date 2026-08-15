@@ -5,13 +5,14 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory;
 
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
+import com.lyflexi.feignx.core.ProjectRefreshManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * StatusBar 右下角"手动刷新"图标工厂(Issue #25)
  * <p>
  * 通过 plugin.xml 的 statusBarWidgetFactory 扩展点注册。
- * 仅负责创建/销毁 UI 组件,刷新逻辑委托给 {@link com.lyflexi.feignx.refresh.FeignRefreshManager}。
+ * 仅负责创建/销毁 UI 组件,刷新逻辑委托给 {@link ProjectRefreshManager}。
  */
 public class FeignRefreshStatusBarWidgetFactory implements StatusBarWidgetFactory {
 

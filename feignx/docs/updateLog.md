@@ -179,8 +179,8 @@ invalidated at: see attachment
     at com.intellij.psi.PsiModifierListOwner.hasAnnotation(PsiModifierListOwner.java:45)
     at com.intellij.psi.PsiJvmModifiersOwner.hasAnnotation(PsiJvmModifiersOwner.java:32)
     at com.lyflexi.feignx.utils.AnnotationParserUtils.isFeignInterface(AnnotationParserUtils.java:101)
-    at com.lyflexi.feignx.utils.FeignClassScanUtils.feignsOfPsiClass(FeignClassScanUtils.java:123)
-    at com.lyflexi.feignx.utils.FeignClassScanUtils.scanFeignInterfaces(FeignClassScanUtils.java:107)
+    at com.lyflexi.feignx.resolver.FeignMappingResolver.feignsOfPsiClass(FeignClassScanUtils.java:123)
+    at com.lyflexi.feignx.resolver.FeignMappingResolver.scanFeignInterfaces(FeignClassScanUtils.java:107)
     at com.lyflexi.feignx.provider.C2FLineMarkerProvider.collectNavigationMarkers(Controller2FeignLineMarkerProvider.java:43)
 ...
 ```
@@ -290,7 +290,7 @@ public interface TradeInnerOrderFeignApi {
 1. 在 IDEA 右下角 StatusBar 新增一个刷新图标（使用插件图标 `pluginIcon.svg`，按 StatusBar 紧凑尺寸自适应缩放），点击后手动触发一次全量刷新：
    - 基于注解索引重新扫描当前工程下所有 Controller 与 FeignClient，并统计扫描结果；
    - 重启 Daemon 强制 gutter 导航图标重新计算，兜底解决索引/缓存异常导致的跳转失效。
-2. 刷新逻辑与 UI 解耦：`com.lyflexi.feignx.refresh.FeignRefreshManager` 独立于 StatusBar 展示层，后续可基于同一入口扩展快捷键 / Action 等触发方式。
+2. 刷新逻辑与 UI 解耦：`com.lyflexi.feignx.core.ProjectRefreshManager` 独立于 StatusBar 展示层，后续可基于同一入口扩展快捷键 / Action 等触发方式。
 3. 刷新在后台线程执行，不阻塞 UI；索引未就绪时会给出提示。
 4. 图标 hover 提示为英文：`Refresh all FeignClients and Controllers`。
 5. 状态栏图标引用 `icons/pluginIcon.svg`（与 `META-INF/pluginIcon.svg` 同内容的副本）：插件类加载器下直接加载 `/META-INF/pluginIcon.svg` 会显示默认占位图标（咖啡杯），而 `/icons/` 目录与 gutter 图标同源、已验证可正常加载；`META-INF/pluginIcon.svg` 仍保留用于插件市场图标。
