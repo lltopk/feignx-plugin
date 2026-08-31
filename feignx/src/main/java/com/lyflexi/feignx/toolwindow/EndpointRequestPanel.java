@@ -33,7 +33,8 @@ import java.util.Objects;
  * 点击执行后由 {@link HttpScriptExecutor} 发送请求;
  * 右块:展示最近一次请求的响应体(状态码 + 响应头 + 响应体)。
  * <p>
- * 线程模型:脚本生成在 ReadAction(EDT)内解析 PSI;HTTP 执行在后台线程,结果回调 EDT 渲染。
+ * 线程模型:脚本生成在后台线程 ReadAction 内解析 PSI(注解 FQN 索引访问不允许放在 EDT 上),结果回调 EDT 渲染;
+ * HTTP 执行在后台线程,结果回调 EDT 渲染。
  *
  * @Author: lyflexi
  * @project: feignx-plugin
@@ -49,6 +50,12 @@ public class EndpointRequestPanel extends JPanel {
     private final JButton historyButton;
     private final JBLabel responseStatusLabel;
     private final HttpHistoryManager historyManager;
+
+    /**
+     * 脚本生成请求序号,用于丢弃过期结果(用户快速切换节点时,避免旧脚本覆盖新脚本)。
+     * 仅在 EDT 上访问(showScript 入口与 UI 回调均在 EDT)。
+     */
+    private long scriptRequestSeq;
 
     public EndpointRequestPanel(Project project) {
         super(new BorderLayout());
@@ -141,11 +148,24 @@ public class EndpointRequestPanel extends JPanel {
         if (DumbService.isDumb(project)) {
             return;
         }
-        String script = ReadAction.compute(() -> HttpScriptGenerator.generate(info));
-        scriptArea.setText(script == null ? "" : script);
-        scriptArea.setCaretPosition(0);
-        responseArea.setText("");
-        responseStatusLabel.setText(" ");
+        // 生成脚本需解析注解(FQN 索引访问),在较新 IDE 上不允许在 EDT 同步执行,
+        // 改到后台线程 ReadAction 计算,完成后回 EDT 填充
+        final long seq = ++scriptRequestSeq;
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            String script = ReadAction.compute(() -> HttpScriptGenerator.generate(info));
+            if (project.isDisposed()) {
+                return;
+            }
+            UIUtil.invokeLaterIfNeeded(() -> {
+                if (project.isDisposed() || seq != scriptRequestSeq) {
+                    return; // 已有更新的选择请求,丢弃过期结果
+                }
+                scriptArea.setText(script == null ? "" : script);
+                scriptArea.setCaretPosition(0);
+                responseArea.setText("");
+                responseStatusLabel.setText(" ");
+            });
+        });
     }
 
     /**

@@ -24,6 +24,7 @@
 4. It supports real-time dynamic parsing of the target interface without the need for manual cache refreshing.<br>
 5. It provides a right-side `FeignClient Assistant With RequestX Endpoints` tool window listing all SpringBoot startup classes, SpringMVC and OpenFeign endpoints in a tree (grouped by type with distinct icons), featuring fuzzy path search, HttpType/EndpointType filters, refresh, and expand/collapse-all buttons.<br>
 6. It lets you send real HTTP requests right inside the endpoints tool window: select a request node to auto-generate an editable IntelliJ HTTP Client script (with `@RequestBody` / `@RequestParam` / `@PathVariable` support), execute it with one click and inspect the response, plus a request history (saved to the project's `.idea/feignx-history`, searchable and one-click reloadable).<br>
+7. Right-clicking on Endpoints provides options, including a one-click copy function to clipboard for the request path.<br>
 <br>
 <b>中文简介: FeignClient Assistant With RequestX 是一款免费的 SpringCloud Feign 以及 HTTP 请求导航与脚本助手。</b><br>
 1. 受 `MybatisX` 和方法级导航侧边栏 `bird` 的启发，它可以在 FeignClient 与远程服务的 ApiController 之间灵活地跨模块来回跳转。例如 feignClient -> ApiController 且 ApiController -> feignClient。<br>
@@ -31,13 +32,14 @@
 3. 经过多轮优化后，目标端点候选项已具有足够的准确性。<br>
 4. 它支持对目标接口进行实时动态解析，无需手动刷新缓存。<br>
 5. 它提供右侧 `FeignClient Assistant With RequestX Endpoints` 端点侧边栏，以树形结构集中展示工程内全部 SpringBoot 启动类、SpringMVC 与 OpenFeign 端点（按类型分组、图标区分），支持路径模糊搜索、HttpType/EndpointType 分类过滤、刷新与全部展开/收起。<br>
-6. 它支持在端点侧边栏内发送真实 HTTP 请求：选中请求节点自动生成可编辑的 IntelliJ HTTP Client 脚本（兼容 `@RequestBody` / `@RequestParam` / `@PathVariable`），一键执行并展示响应，同时记录请求历史（保存到工程 `.idea/feignx-history`，支持搜索与一键回填）。<br>]]></description>
+6. 它支持在端点侧边栏内发送真实 HTTP 请求：选中请求节点自动生成可编辑的 IntelliJ HTTP Client 脚本（兼容 `@RequestBody` / `@RequestParam` / `@PathVariable`），一键执行并展示响应，同时记录请求历史（保存到工程 `.idea/feignx-history`，支持搜索与一键回填）。<br>
+7. 鼠标右键Endpoints提供可选项, 调出一键复制请求路径剪切板功能<br>]]></description>
 
     <change-notes>
         <![CDATA[update logs: https://github.com/lltopk/feignx-plugin/blob/main/feignx/docs/updateLog.md]]>
     </change-notes>
     <!--虽然build.gradle.kts指定过版本，但这里为了上架官方市场，还需再次执行版本-->
-    <version>5.7.2</version>
+    <version>5.7.3</version>
     <!--插件支持版本 2020.3+-->
     <idea-version since-build="203.0"/>
     <!-- Product and plugin compatibility requirements.
@@ -64,8 +66,7 @@
         <!--                factoryClass="com.lyflexi.feignx.toolwindow.SearchToolWindowFactory"/>-->
 
         <notificationGroup id="FeignClient Assistant With RequestX"
-                           displayType="BALLOON"
-                           key="notification.group.name"/>
+                           displayType="BALLOON"/>
 
         <!-- feignclent类文件图标修改-->
         <iconProvider id="com.lyflexi.feignx.provider.tabIcon.FeignClassIconProvider"

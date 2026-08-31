@@ -54,9 +54,9 @@ FeignClient Assistant With RequestX是一个免费的SpringCloud FeignClient与�
 2. FeignClient Assistant With RequestX支持`yml/yaml/properties`属性解析，如`server.servlet.context-path`和`spring.mvc.servlet.path`
 3. FeignClient Assistant With RequestX精确定位目标接口，在多目标接口场景下，`FeignClient Assistant With RequestX`给用户提供多选项
 4. FeignClient Assistant With RequestX支持实时动态解析目标接口，无需手动刷新缓存
-5. FeignClient Assistant With RequestX支持url全路径复制到剪贴板（包括`Feign`和`Controller`接口），以帮助Vim朋友。
-6. FeignClient Assistant With RequestX提供右侧`FeignClient Assistant With RequestX Endpoints`端点侧边栏：以树形结构集中展示工程内全部SpringBoot启动类、SpringMVC与OpenFeign端点（按类型分组、图标区分），支持路径模糊搜索、`HttpType`/`EndpointType`分类过滤、刷新与全部展开/收起，双击可跳转源码。
-7. FeignClient Assistant With RequestX支持在端点侧边栏中发送真实HTTP请求：选中请求节点自动生成可编辑的 IntelliJ HTTP Client 脚本（兼容`@RequestBody`/`@RequestParam`/`@PathVariable`），一键执行并展示响应，同时记录请求历史（保存到工程`.idea/feignx-history`目录，支持搜索过滤与一键回填）。
+5. FeignClient Assistant With RequestX提供右侧`FeignClient Assistant With RequestX Endpoints`端点侧边栏：以树形结构集中展示工程内全部SpringBoot启动类、SpringMVC与OpenFeign端点（按类型分组、图标区分），支持路径模糊搜索、`HttpType`/`EndpointType`分类过滤、刷新与全部展开/收起，双击可跳转源码。
+6. FeignClient Assistant With RequestX支持在端点侧边栏中发送真实HTTP请求：选中请求节点自动生成可编辑的 IntelliJ HTTP Client 脚本（兼容`@RequestBody`/`@RequestParam`/`@PathVariable`），一键执行并展示响应，同时记录请求历史（保存到工程`.idea/feignx-history`目录，支持搜索过滤与一键回填）。
+7. 鼠标右键当前行`Endpoints Gutter`提供可选项, 调出一键复制请求路径剪切板功能
 
 ### feat navigation
 eg. FeignClent接口方法 跨模块导航跳转至 目标ApiController接口，与URL全路径一键剪切板拷贝
@@ -78,6 +78,11 @@ eg. ApiController接口方法 跨模块导航跳转至 目标FeignClient接口�
 ### feat refresh
 <div align="left">
   <img src="./feignx/pics/feat_handson_refresh.png">
+</div>
+
+### feat copy url to clipboard
+<div align="left">
+  <img src="./feignx/pics/copy_url_to_clipboard.png">
 </div>
 
 

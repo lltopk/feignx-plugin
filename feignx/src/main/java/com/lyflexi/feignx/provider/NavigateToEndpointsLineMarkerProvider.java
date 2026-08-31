@@ -4,7 +4,14 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.GutterName;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -21,6 +28,7 @@ import com.lyflexi.feignx.utils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.datatransfer.StringSelection;
 import java.util.Objects;
 
 /**
@@ -38,6 +46,8 @@ import java.util.Objects;
 public class NavigateToEndpointsLineMarkerProvider extends LineMarkerProviderDescriptor {
 
     private static final String TOOL_WINDOW_ID = "FeignClient Assistant With RequestX Endpoints";
+
+    private static final String NOTIFICATION_GROUP_ID = "FeignClient Assistant With RequestX";
 
     @Override
     public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
@@ -87,18 +97,14 @@ public class NavigateToEndpointsLineMarkerProvider extends LineMarkerProviderDes
             return null;
         }
 
+        // Issue #21:复制 URL 时拼接 @RequestParam query 串,如 /user/list?code=
+        String urlWithParams = AnnotationParserUtils.appendRequestParams(path, AnnotationParserUtils.extractRequestParams(method));
+
         GutterIconNavigationHandler<PsiElement> handler = (mouseEvent, elt) ->
                 navigateToEndpoints(project, path);
 
-        return new LineMarkerInfo<>(
-                restfulAnnotation,
-                restfulAnnotation.getTextRange(),
-                RestIcons.STATEMENT_LINE_OPEN_API_ICON,
-                psi -> "Show In Endpoints Panel: " + path,
-                handler,
-                GutterIconRenderer.Alignment.RIGHT,
-                () -> "Show In Endpoints Panel"
-        );
+        // 左键单击跳转 Endpoints 面板,右键弹出功能菜单(复制完整请求路径 / 在 Endpoints 面板中显示)
+        return new EndpointsLineMarkerInfo(restfulAnnotation, project, path, urlWithParams, handler);
     }
 
     /**
@@ -123,5 +129,90 @@ public class NavigateToEndpointsLineMarkerProvider extends LineMarkerProviderDes
     @Override
     public @Nullable @GutterName String getName() {
         return "Show In Endpoints Panel";
+    }
+
+    /**
+     * 挂载在 Restful 注解旁的 gutter 图标。
+     * 左键单击触发 {@link #handler}(跳转 Endpoints 面板);
+     * 右键通过覆写 {@link #createGutterRenderer()} 提供功能菜单(复制请求路径 / 在 Endpoints 面板中显示)。
+     */
+    private static final class EndpointsLineMarkerInfo extends LineMarkerInfo<PsiElement> {
+
+        private final Project project;
+        private final String path;
+        private final String urlWithParams;
+
+        private final GutterIconNavigationHandler<PsiElement> handler;
+
+        private EndpointsLineMarkerInfo(PsiAnnotation restfulAnnotation,
+                                        Project project,
+                                        String path,
+                                        String urlWithParams,
+                                        GutterIconNavigationHandler<PsiElement> handler) {
+            super(restfulAnnotation,
+                    restfulAnnotation.getTextRange(),
+                    RestIcons.STATEMENT_LINE_OPEN_API_ICON,
+                    psi -> "Show In Endpoints Panel: " + path,
+                    handler,
+                    GutterIconRenderer.Alignment.RIGHT,
+                    () -> "Show In Endpoints Panel");
+            this.project = project;
+            this.path = path;
+            this.urlWithParams = urlWithParams;
+            this.handler = handler;
+        }
+
+        @Override
+        public GutterIconRenderer createGutterRenderer() {
+            if (myIcon == null) {
+                return null; // 与父类契约一致:无图标时不生成 renderer
+            }
+            // 平台端 LineMarkersUtil.createOrReuseLineMarker 会对返回值直接 checkcast 为
+            // LineMarkerInfo.LineMarkerGutterIconRenderer,因此必须继承该类而非 GutterIconRenderer
+            return new EndpointsGutterIconRenderer(this, project, path, urlWithParams);
+        }
+    }
+
+    /**
+     * gutter 图标 renderer:左键导航走父类 {@link LineMarkerInfo.LineMarkerGutterIconRenderer} 默认行为,
+     * 右键弹出功能菜单(复制请求路径 / 在 Endpoints 面板中显示)。
+     */
+    private static final class EndpointsGutterIconRenderer extends LineMarkerInfo.LineMarkerGutterIconRenderer<PsiElement> {
+
+        private final Project project;
+        private final String path;
+        private final String urlWithParams;
+
+        private EndpointsGutterIconRenderer(LineMarkerInfo<PsiElement> info,
+                                            Project project,
+                                            String path,
+                                            String urlWithParams) {
+            super(info);
+            this.project = project;
+            this.path = path;
+            this.urlWithParams = urlWithParams;
+        }
+
+        @Override
+        public ActionGroup getPopupMenuActions() {
+            return new DefaultActionGroup(
+                    new AnAction("复制请求路径 (Copy URL)") {
+                        @Override
+                        public void actionPerformed(@NotNull AnActionEvent event) {
+                            CopyPasteManager.getInstance().setContents(new StringSelection(urlWithParams));
+                            NotificationGroupManager.getInstance()
+                                    .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                                    .createNotification("URL Copied To Clipboard:\n" + urlWithParams, NotificationType.INFORMATION)
+                                    .notify(project);
+                        }
+                    },
+                    new AnAction("在 Endpoints 面板中显示 (Show In Endpoints Panel)") {
+                        @Override
+                        public void actionPerformed(@NotNull AnActionEvent event) {
+                            navigateToEndpoints(project, path);
+                        }
+                    }
+            );
+        }
     }
 }

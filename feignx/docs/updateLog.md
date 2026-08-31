@@ -320,3 +320,10 @@ public interface TradeInnerOrderFeignApi {
 
 1. 修复端点侧边栏双击请求端点所在整行（含文字右侧空白区域）无法定位到编辑器源码的问题，现在双击该行任意位置即可跳转到对应接口方法/类源码。
 2. 修复在较新 IDEA（如 2025.3 等）下，Kotlin 插件 Analysis API 服务缺失导致注解扫描抛出 `Cannot find service KaGlobalSearchScopeMerger / KotlinProjectStructureProvider`、Controller/Feign 之间导航 gutter 消失的问题：改为基于 Java 注解索引（JavaAnnotationIndex）扫描工程内标注类，绕开会触发 Kotlin 注解搜索扩展点的 `AnnotatedElementsSearch`。
+
+### 🚀 FeignClient Assistant With RequestX v5.7.3更新内容
+更新分支：main
+
+1. [feat] Controller/Feign 方法左侧 gutter 图标新增右键功能菜单：「复制请求路径」将完整请求路径（含 @RequestParam query 串，Issue #21）复制到剪切板并右下角提示；「在 Endpoints 面板中显示」与左键单击行为一致。
+2. [fix] 修复在较新 IDEA（如 2026.02）下点击 gutter 跳转 Endpoints 面板时抛出 `Slow operations are prohibited on EDT` 的问题：HTTP 脚本生成需解析注解 FQN 索引，不允许在 EDT 同步执行，现改为后台线程 ReadAction 计算、完成后回 EDT 渲染，并增加序号守卫避免快速切换节点时旧脚本覆盖新脚本。
+3. [fix] 右键菜单 renderer 需继承平台 `LineMarkerInfo.LineMarkerGutterIconRenderer`，避免较新 IDEA 中 `LineMarkersUtil.createOrReuseLineMarker` 对其返回值直接 checkcast 抛 `ClassCastException`。
