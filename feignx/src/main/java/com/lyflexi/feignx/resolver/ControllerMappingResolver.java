@@ -84,10 +84,17 @@ public class ControllerMappingResolver {
      * 其中 server/mvc 配置按模块(moduleRoot)在单次扫描内做内存缓存，避免每个controller重复解析同一份配置文件
      */
     private static String controllerParentPathWithModuleCache(PsiClass psiClass, Project project, Map<String, String> moduleServerPrefixCache) {
+        String classPath = controllerPsiClassPath(psiClass);
         String moduleKey = ServerParser.getModuleRootPath(psiClass, project);
-        String serverPrefix = moduleServerPrefixCache.computeIfAbsent(moduleKey, k ->
-                extractSpringProperties(psiClass, project, SPRINGBOOT_SERVER_PATH) + extractSpringProperties(psiClass, project, SPRINGMVC_PATH));
-        return serverPrefix + controllerPsiClassPath(psiClass);
+        try {
+            String serverPrefix = moduleServerPrefixCache.computeIfAbsent(moduleKey, k ->
+                    extractSpringProperties(psiClass, project, SPRINGBOOT_SERVER_PATH) + extractSpringProperties(psiClass, project, SPRINGMVC_PATH));
+            return serverPrefix + classPath;
+        } catch (RuntimeException e) {
+            // 解析 server/mvc 前缀过程中 VFS 可能因文件被删除而抛出 FileDeletedException 等异常。
+            // 此处降级为"仅类级前缀"，保证该 controller 仍可被扫描与导航，不因单个模块的配置读取失败中断整次扫描。
+            return classPath;
+        }
     }
 
     /**

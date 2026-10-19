@@ -327,3 +327,12 @@ public interface TradeInnerOrderFeignApi {
 1. [feat] Controller/Feign 方法左侧 gutter 图标新增右键功能菜单：「复制请求路径」将完整请求路径（含 @RequestParam query 串，Issue #21）复制到剪切板并右下角提示；「在 Endpoints 面板中显示」与左键单击行为一致。
 2. [fix] 修复在较新 IDEA（如 2026.02）下点击 gutter 跳转 Endpoints 面板时抛出 `Slow operations are prohibited on EDT` 的问题：HTTP 脚本生成需解析注解 FQN 索引，不允许在 EDT 同步执行，现改为后台线程 ReadAction 计算、完成后回 EDT 渲染，并增加序号守卫避免快速切换节点时旧脚本覆盖新脚本。
 3. [fix] 右键菜单 renderer 需继承平台 `LineMarkerInfo.LineMarkerGutterIconRenderer`，避免较新 IDEA 中 `LineMarkersUtil.createOrReuseLineMarker` 对其返回值直接 checkcast 抛 `ClassCastException`。
+
+### 🐞 FeignClient Assistant With RequestX v5.7.4更新内容
+更新分支：main
+
+1. [fix] 修复点击刷新（StatusBar / Endpoints 面板刷新按钮）在大工程上抛出 `com.intellij.openapi.vfs.newvfs.FileDeletedException: file is deleted, but still in [...].children list` 导致整次扫描中断、gutter 图标全部消失的问题。根因是 `ServerParser.findResourcesDirectory` 为定位一个固定路径的 resources 目录而无条件递归遍历了整个模块目录树，遍历过程中跨越了 `target/`、`.git/` 等正在被并发读写的目录，VFS 在读取子节点列表时抛异常。现改为优先按标准 Maven/Gradle 布局 `src/main/resources` 做定向 VFS 查询（常数级开销，不展开目录树），仅在标准布局不存在时才启用兜底递归。
+2. [perf] resources 目录定位由「全模块目录树递归」降为「`src` → `main` → `resources` 三次 `findChild`」，大工程下扫描耗时显著下降；模块级配置缓存（`moduleServerPrefixCache`）因此也少了一次无效的重复目录遍历。
+3. [fix] 为 VFS 竞态补充防御：`ServerParser` / `ConfigReader` 在遍历与 `findChild` 时统一过滤 `!isValid()` 节点，并对 `FileDeletedException` 等可恢复异常做兜底，单个目录/文件在扫描期间被删除不再影响扫描结果。
+4. [fix] 兜底递归新增最大深度限制（4 层）、跳过构建产物与版本库目录（`target`/`build`/`out`/`node_modules`/`.git`/`.idea` 等），并用路径集合去重防止软链接环路导致的无限递归与 `StackOverflowError`。
+5. [fix] `ControllerMappingResolver.controllerParentPathWithModuleCache` 增加最外层异常兜底：单个模块的 server/mvc 前缀解析失败时降级为「仅类级 @RequestMapping 前缀」，该 Controller 仍可正常扫描与导航，不再因一个模块的配置读取问题导致整次刷新失败。

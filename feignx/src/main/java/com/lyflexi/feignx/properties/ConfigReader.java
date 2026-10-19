@@ -11,10 +11,13 @@ import java.io.InputStream;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 
 /**
@@ -42,6 +45,18 @@ public class ConfigReader {
     private static final String SPRING_PROFILES_ACTIVE = "spring.profiles.active";
     private static final String APPLICATION_PROFILE_PREFIX = "application-";
     private static final String BOOTSTRAP_PROFILE_PREFIX = "bootstrap-";
+
+    /**
+     * profile 文件名兜底扫描的最大深度，避免异常布局下无限下探
+     */
+    private static final int MAX_PROFILE_SCAN_DEPTH = 4;
+
+    /**
+     * profile 文件名兜底扫描时跳过的构建产物/版本库目录
+     */
+    private static final Set<String> PROFILE_SCAN_SKIPPED_DIRS = new HashSet<>(Arrays.asList(
+            "target", "build", "out", "node_modules", ".git", ".idea", ".svn", ".hg"
+    ));
 
 
     /**
@@ -149,16 +164,51 @@ public class ConfigReader {
         if (moduleDirectory == null || moduleDirectory.getVirtualFile() == null) {
             return;
         }
-        collectProfileFileNamesRecursively(moduleDirectory.getVirtualFile(), profiles);
-    }
-
-    private static void collectProfileFileNamesRecursively(VirtualFile directory, List<String> profiles) {
-        if (!directory.isDirectory()) {
+        if (!moduleDirectory.isValid() || !moduleDirectory.getVirtualFile().isValid()) {
             return;
         }
-        for (VirtualFile child : directory.getChildren()) {
+        // 以路径去重，避免软链接/目录硬链接导致的环路无限递归
+        collectProfileFileNamesRecursively(moduleDirectory.getVirtualFile(), profiles, 0, new HashSet<>());
+    }
+
+    /**
+     * 递归扫描文件名以兜底推导 active profile。
+     * <p>
+     * 限定最大深度、跳过构建产物目录，并对每一层做异常兜底：
+     * 扫描期间文件随时可能被删除(VFS 会抛 {@code FileDeletedException})，
+     * 此类异常属于可恢复情况，不应中断整次刷新。
+     */
+    private static void collectProfileFileNamesRecursively(VirtualFile directory, List<String> profiles, int depth, Set<String> visited) {
+        if (directory == null || !directory.isValid() || !directory.isDirectory()) {
+            return;
+        }
+        if (depth > MAX_PROFILE_SCAN_DEPTH) {
+            return;
+        }
+        if (!visited.add(directory.getPath())) {
+            return;
+        }
+
+        VirtualFile[] children;
+        try {
+            children = directory.getChildren();
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (children == null) {
+            return;
+        }
+
+        for (VirtualFile child : children) {
+            // 扫描期间文件可能随时被删除，失效节点必须跳过
+            if (child == null || !child.isValid()) {
+                continue;
+            }
             if (child.isDirectory()) {
-                collectProfileFileNamesRecursively(child, profiles);
+                if (PROFILE_SCAN_SKIPPED_DIRS.contains(child.getName())) {
+                    continue;
+                }
+                collectProfileFileNamesRecursively(child, profiles, depth + 1, visited);
             } else {
                 String profile = profileFromFileName(child.getName());
                 if (StringUtil.isNotBlank(profile) && !profiles.contains(profile)) {
